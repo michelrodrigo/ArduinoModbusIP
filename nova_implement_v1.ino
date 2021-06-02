@@ -4,6 +4,11 @@
 #include <Modbus.h>
 #include <ModbusIP.h>
 
+// Constants --------------------------------------------------------------
+
+#define MAX_TEMP 300 // maximum temperature value
+#define MIN_TEMP 10  // minimum temperature value
+
 // Objects and Variables --------------------------------------------------
 
 //ModbusIP object
@@ -18,11 +23,11 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 long ts; // stores the time
 
+
+
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
-int setPointPin = A0;
-int ledPin = 9;
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -40,7 +45,6 @@ void update_io();
 void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
   pinMode(outputPin, OUTPUT);
-  pinMode(ledPin, OUTPUT);
 
 
   Setpoint = 100;
@@ -66,7 +70,7 @@ void setup () {
 
 void loop () {
 
-  Input = analogRead(sensorPin);  // Read the value from the sensor
+  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   myPID.Compute();
   analogWrite(outputPin, Output);
   Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
@@ -82,7 +86,14 @@ void loop () {
 
 void update_io(){
 
+   
    Setpoint = mb.Hreg(SETPOINT_HREG);
+   if(Setpoint > MAX_TEMP){
+      Setpoint = MAX_TEMP;
+   }
+   if(Setpoint < MIN_TEMP){
+      Setpoint = MIN_TEMP; 
+   }
 
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
