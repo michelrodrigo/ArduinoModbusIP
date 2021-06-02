@@ -3,6 +3,7 @@
 #include <Ethernet.h>
 #include <Modbus.h>
 #include <ModbusIP.h>
+#include <EEPROM.h>
 
 // Constants --------------------------------------------------------------
 
@@ -16,6 +17,7 @@ ModbusIP mb;
 
 //Define Variables we'll be connecting to
 double Setpoint, Input, Output;
+double newSetpoint;
 
 //Specify the links and initial tuning parameters
 double Kp=2, Ki=5, Kd=1;
@@ -37,9 +39,14 @@ const int SETPOINT_IREG = 20;
 const int SENSOR_IREG = 2;
 const int ACTION_IREG = 3;
 
+// EEPROM ADDRESSES ------------------------------------------------------
+#define TEMP_SETPOINT_ADDRESS 0
+
 
 // Function headers ------------------------------------------------------
 void update_io();
+void update_setpoint();
+void read_setpoint();
 
 
 void setup () {
@@ -47,7 +54,7 @@ void setup () {
   pinMode(outputPin, OUTPUT);
 
 
-  Setpoint = 100;
+  read_setpoint(); //reads from EEPROM
    //turn the PID on
   myPID.SetMode(AUTOMATIC);
 
@@ -65,6 +72,8 @@ void setup () {
   mb.addIreg(ACTION_IREG);
 
   ts = millis();
+
+  delay(5000);
 
 }
 
@@ -87,15 +96,39 @@ void loop () {
 void update_io(){
 
    
-   Setpoint = mb.Hreg(SETPOINT_HREG);
-   if(Setpoint > MAX_TEMP){
-      Setpoint = MAX_TEMP;
+   newSetpoint = mb.Hreg(SETPOINT_HREG);
+   if(newSetpoint > MAX_TEMP){
+      newSetpoint = MAX_TEMP;
    }
-   if(Setpoint < MIN_TEMP){
-      Setpoint = MIN_TEMP; 
+   else if(newSetpoint < MIN_TEMP){
+      newSetpoint = MIN_TEMP; 
    }
+   if(newSetpoint != Setpoint){
+      Setpoint = newSetpoint;
+      update_setpoint();
+   }
+  
 
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
    mb.Ireg(ACTION_IREG, Output);  
+}
+
+void update_setpoint(){
+
+  int aux = 0;
+  int value1 = Setpoint / 1000;
+  aux = Setpoint - value1 * 1000;
+  int value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  int value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP_SETPOINT_ADDRESS, aux);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+1, value3);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+2, value2);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+3, value1);  
+}
+
+void read_setpoint(){  
+  Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
 }
