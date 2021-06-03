@@ -52,12 +52,17 @@ const int TEMP_H3_HREG = 7;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
+#define TEMP_H1_ADDRESS 4
+#define TEMP_H2_ADDRESS 8
+#define TEMP_H3_ADDRESS 12
 
 
 // Function headers ------------------------------------------------------
 void update_io();
 void update_setpoint();
 void read_setpoint();
+void update_temp_levels();
+void read_temp_levels();
 
 
 void setup () {
@@ -66,6 +71,7 @@ void setup () {
 
 
   read_setpoint(); //reads from EEPROM
+  read_temp_levels();
    //turn the PID on
   myPID.SetMode(AUTOMATIC);
 
@@ -134,6 +140,7 @@ void update_io(){
    }
    if(newTempH1 != tempH1){
       tempH1 = newTempH1;
+      update_temp_levels();
    }
    
    newTempH2 = mb.Hreg(TEMP_H2_HREG);
@@ -145,6 +152,7 @@ void update_io(){
    }
    if(newTempH2 != tempH2){
       tempH2 = newTempH2;
+      update_temp_levels();
    }
 
    newTempH3 = mb.Hreg(TEMP_H3_HREG);
@@ -156,6 +164,7 @@ void update_io(){
    }
    if(newTempH3 != tempH1){
       tempH3 = newTempH3;
+      update_temp_levels();
    }
    
 
@@ -195,5 +204,48 @@ void update_setpoint(){
 
 void read_setpoint(){  
   Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
+}
+
+void update_temp_levels(){
+  int aux = 0;
+  int value1 = tempH1 / 1000;
+  aux = tempH1 - value1 * 1000;
+  int value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  int value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP_H1_ADDRESS, aux);
+  EEPROM.update(TEMP_H1_ADDRESS+1, value3);
+  EEPROM.update(TEMP_H1_ADDRESS+2, value2);
+  EEPROM.update(TEMP_H1_ADDRESS+3, value1); 
+
+  
+  value1 = tempH2 / 1000;
+  aux = tempH2 - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP_H2_ADDRESS, aux);
+  EEPROM.update(TEMP_H2_ADDRESS+1, value3);
+  EEPROM.update(TEMP_H2_ADDRESS+2, value2);
+  EEPROM.update(TEMP_H2_ADDRESS+3, value1); 
+
+  
+  value1 = tempH3 / 1000;
+  aux = tempH3 - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP_H3_ADDRESS, aux);
+  EEPROM.update(TEMP_H3_ADDRESS+1, value3);
+  EEPROM.update(TEMP_H3_ADDRESS+2, value2);
+  EEPROM.update(TEMP_H3_ADDRESS+3, value1);  
+}
+void read_temp_levels(){
+  tempH1 = EEPROM.read(TEMP_H1_ADDRESS) + EEPROM.read(TEMP_H1_ADDRESS+1)*10 + EEPROM.read(TEMP_H1_ADDRESS+2)*100 + EEPROM.read(TEMP_H1_ADDRESS+3)*1000; 
+  tempH2 = EEPROM.read(TEMP_H2_ADDRESS) + EEPROM.read(TEMP_H2_ADDRESS+1)*10 + EEPROM.read(TEMP_H2_ADDRESS+2)*100 + EEPROM.read(TEMP_H2_ADDRESS+3)*1000; 
+  tempH3 = EEPROM.read(TEMP_H3_ADDRESS) + EEPROM.read(TEMP_H3_ADDRESS+1)*10 + EEPROM.read(TEMP_H3_ADDRESS+2)*100 + EEPROM.read(TEMP_H3_ADDRESS+3)*1000; 
 }
 
