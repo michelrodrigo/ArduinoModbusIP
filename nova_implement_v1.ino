@@ -1,3 +1,4 @@
+
 // Libraries ---------------------------------------------------------------
 #include <PID_v1.h>
 #include <Ethernet.h>
@@ -25,7 +26,7 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 long ts; // stores the time
 
-
+int temp_state = 0; //stores the state of the temperature automaton
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -38,6 +39,7 @@ const int SETPOINT_HREG = 1;
 const int SETPOINT_IREG = 20;
 const int SENSOR_IREG = 2;
 const int ACTION_IREG = 3;
+const int TEMP_STATE_IREG = 4;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -70,6 +72,7 @@ void setup () {
   mb.addHreg(SETPOINT_HREG);
   mb.addIreg(SETPOINT_IREG);
   mb.addIreg(ACTION_IREG);
+  mb.addIreg(TEMP_STATE_IREG);
 
   ts = millis();
 
@@ -107,8 +110,21 @@ void update_io(){
       Setpoint = newSetpoint;
       update_setpoint();
    }
-  
 
+   if(Input <= 100){
+     temp_state = 0;
+   }
+   else if ((Input > 100) && (Input <= 150)){
+     temp_state = 1;
+   }
+   else if ((Input > 150) && (Input <= 250)){
+     temp_state = 2;
+   }
+   else if(Input > 250){
+     temp_state = 3;
+   }
+
+   mb.Ireg(TEMP_STATE_IREG, temp_state);
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
    mb.Ireg(ACTION_IREG, Output);  
@@ -132,3 +148,4 @@ void update_setpoint(){
 void read_setpoint(){  
   Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
 }
+
