@@ -27,8 +27,12 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 long ts; // stores the time
 
 int temp_state = 0; //stores the state of the temperature automaton
-int tempH1 = 0; //stores the temperature that defines the events H1 and L1
+int tempH1 = 50; //stores the temperature that defines the events H1 and L1
 int newTempH1 = 0;
+int tempH2 = 100; //stores the temperature that defines the events H2 and L2
+int newTempH2 = 0;
+int tempH3 = 200; //stores the temperature that defines the events H3 and L3
+int newTempH3 = 0;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -43,6 +47,8 @@ const int SENSOR_IREG = 2;
 const int ACTION_IREG = 3;
 const int TEMP_STATE_IREG = 4;
 const int TEMP_H1_HREG = 5;
+const int TEMP_H2_HREG = 6;
+const int TEMP_H3_HREG = 7;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -77,6 +83,8 @@ void setup () {
   mb.addIreg(ACTION_IREG);
   mb.addIreg(TEMP_STATE_IREG);
   mb.addHreg(TEMP_H1_HREG);
+  mb.addHreg(TEMP_H2_HREG);
+  mb.addHreg(TEMP_H3_HREG);
 
 
   ts = millis();
@@ -90,7 +98,8 @@ void loop () {
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   myPID.Compute();
   analogWrite(outputPin, Output);
-  Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
+  //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
+  Serial.println(tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
 
   //Call once inside loop() - all magic here
    mb.task();
@@ -126,17 +135,40 @@ void update_io(){
    if(newTempH1 != tempH1){
       tempH1 = newTempH1;
    }
+   
+   newTempH2 = mb.Hreg(TEMP_H2_HREG);
+   if(newTempH2 > MAX_TEMP){
+      newTempH2 = MAX_TEMP;
+   }
+   else if(newTempH2 < MIN_TEMP){
+      newTempH2 = MIN_TEMP; 
+   }
+   if(newTempH2 != tempH2){
+      tempH2 = newTempH2;
+   }
+
+   newTempH3 = mb.Hreg(TEMP_H3_HREG);
+   if(newTempH3 > MAX_TEMP){
+      newTempH3 = MAX_TEMP;
+   }
+   else if(newTempH3 < MIN_TEMP){
+      newTempH3 = MIN_TEMP; 
+   }
+   if(newTempH3 != tempH1){
+      tempH3 = newTempH3;
+   }
+   
 
    if(Input <= tempH1){
      temp_state = 0;
    }
-   else if ((Input > tempH1) && (Input <= 150)){
+   else if ((Input > tempH1) && (Input <= tempH2)){
      temp_state = 1;
    }
-   else if ((Input > 150) && (Input <= 250)){
+   else if ((Input > tempH2) && (Input <= tempH3)){
      temp_state = 2;
    }
-   else if(Input > 250){
+   else if(Input > tempH3){
      temp_state = 3;
    }
 
