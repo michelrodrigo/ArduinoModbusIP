@@ -27,6 +27,8 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 long ts; // stores the time
 
 int temp_state = 0; //stores the state of the temperature automaton
+int tempH1 = 0; //stores the temperature that defines the events H1 and L1
+int newTempH1 = 0;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -40,6 +42,7 @@ const int SETPOINT_IREG = 20;
 const int SENSOR_IREG = 2;
 const int ACTION_IREG = 3;
 const int TEMP_STATE_IREG = 4;
+const int TEMP_H1_HREG = 5;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -73,6 +76,8 @@ void setup () {
   mb.addIreg(SETPOINT_IREG);
   mb.addIreg(ACTION_IREG);
   mb.addIreg(TEMP_STATE_IREG);
+  mb.addHreg(TEMP_H1_HREG);
+
 
   ts = millis();
 
@@ -111,10 +116,21 @@ void update_io(){
       update_setpoint();
    }
 
-   if(Input <= 100){
+   newTempH1 = mb.Hreg(TEMP_H1_HREG);
+   if(newTempH1 > MAX_TEMP){
+      newTempH1 = MAX_TEMP;
+   }
+   else if(newTempH1 < MIN_TEMP){
+      newTempH1 = MIN_TEMP; 
+   }
+   if(newTempH1 != tempH1){
+      tempH1 = newTempH1;
+   }
+
+   if(Input <= tempH1){
      temp_state = 0;
    }
-   else if ((Input > 100) && (Input <= 150)){
+   else if ((Input > tempH1) && (Input <= 150)){
      temp_state = 1;
    }
    else if ((Input > 150) && (Input <= 250)){
