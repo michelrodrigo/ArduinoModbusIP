@@ -72,9 +72,10 @@ void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
   pinMode(outputPin, OUTPUT);
 
-
+  Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   read_setpoint(); //reads from EEPROM
   read_temp_levels();
+  Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    //turn the PID on
   myPID.SetMode(AUTOMATIC);
 
@@ -109,7 +110,7 @@ void loop () {
   myPID.Compute();
   analogWrite(outputPin, Output);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-  Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+
 
   //Call once inside loop() - all magic here
    mb.task();
@@ -117,6 +118,7 @@ void loop () {
    if (millis() > ts + 100) {
        ts = millis();
        update_io();
+       Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    }
 }
 
@@ -124,51 +126,62 @@ void update_io(){
 
    
    newSetpoint = mb.Hreg(SETPOINT_HREG);
-   if(newSetpoint > MAX_TEMP){
-      newSetpoint = MAX_TEMP;
-   }
-   else if(newSetpoint < MIN_TEMP){
-      newSetpoint = MIN_TEMP; 
-   }
-   if(newSetpoint != Setpoint){
-      Setpoint = newSetpoint;
-      update_setpoint();
+   if(newSetpoint != 0){
+     if(newSetpoint > MAX_TEMP){
+        newSetpoint = MAX_TEMP;
+     }
+     else if(newSetpoint < MIN_TEMP){
+        newSetpoint = MIN_TEMP; 
+     }
+     if(newSetpoint != Setpoint){
+        Setpoint = newSetpoint;
+        update_setpoint();
+     }
    }
 
    newTempH1 = mb.Hreg(TEMP_H1_HREG);
-   if(newTempH1 > MAX_TEMP){
-      newTempH1 = MAX_TEMP;
-   }
-   else if(newTempH1 < MIN_TEMP){
-      newTempH1 = MIN_TEMP; 
-   }
-   if(newTempH1 != tempH1){
-      tempH1 = newTempH1;
-      update_temp_levels();
+   if(newTempH1 != 0){
+     if(newTempH1 > MAX_TEMP){
+        newTempH1 = MAX_TEMP;
+     }
+     else if(newTempH1 < MIN_TEMP){
+        newTempH1 = MIN_TEMP; 
+     }
+     if(newTempH1 != tempH1){
+        tempH1 = newTempH1;
+        Serial.println("Call from H1");
+        update_temp_levels();
+     }
    }
    
    newTempH2 = mb.Hreg(TEMP_H2_HREG);
-   if(newTempH2 > MAX_TEMP){
-      newTempH2 = MAX_TEMP;
-   }
-   else if(newTempH2 < MIN_TEMP){
-      newTempH2 = MIN_TEMP; 
-   }
-   if(newTempH2 != tempH2){
-      tempH2 = newTempH2;
-      update_temp_levels();
+   if(newTempH2 != 0){
+     if(newTempH2 > MAX_TEMP){
+        newTempH2 = MAX_TEMP;
+     }
+     else if(newTempH2 < MIN_TEMP){
+        newTempH2 = MIN_TEMP; 
+     }
+     if(newTempH2 != tempH2){
+        tempH2 = newTempH2;
+        Serial.println("Call from H2");
+        update_temp_levels();
+     }
    }
 
    newTempH3 = mb.Hreg(TEMP_H3_HREG);
-   if(newTempH3 > MAX_TEMP){
-      newTempH3 = MAX_TEMP;
-   }
-   else if(newTempH3 < MIN_TEMP){
-      newTempH3 = MIN_TEMP; 
-   }
-   if(newTempH3 != tempH1){
-      tempH3 = newTempH3;
-      update_temp_levels();
+   if(newTempH3 != 0){
+     if(newTempH3 > MAX_TEMP){
+        newTempH3 = MAX_TEMP;
+     }
+     else if(newTempH3 < MIN_TEMP){
+        newTempH3 = MIN_TEMP; 
+     }
+     if(newTempH3 != tempH3){
+        tempH3 = newTempH3;
+        Serial.println("Call from H3");
+        update_temp_levels();
+     }
    }
    
 
@@ -213,6 +226,8 @@ void read_setpoint(){
 }
 
 void update_temp_levels(){
+
+  Serial.println(String("Updated: ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   int aux = 0;
   int value1 = tempH1 / 1000;
   aux = tempH1 - value1 * 1000;
@@ -252,6 +267,7 @@ void update_temp_levels(){
 void read_temp_levels(){
   tempH1 = EEPROM.read(TEMP_H1_ADDRESS) + EEPROM.read(TEMP_H1_ADDRESS+1)*10 + EEPROM.read(TEMP_H1_ADDRESS+2)*100 + EEPROM.read(TEMP_H1_ADDRESS+3)*1000; 
   tempH2 = EEPROM.read(TEMP_H2_ADDRESS) + EEPROM.read(TEMP_H2_ADDRESS+1)*10 + EEPROM.read(TEMP_H2_ADDRESS+2)*100 + EEPROM.read(TEMP_H2_ADDRESS+3)*1000; 
-  tempH3 = EEPROM.read(TEMP_H3_ADDRESS) + EEPROM.read(TEMP_H3_ADDRESS+1)*10 + EEPROM.read(TEMP_H3_ADDRESS+2)*100 + EEPROM.read(TEMP_H3_ADDRESS+3)*1000; 
+  tempH3 = EEPROM.read(TEMP_H3_ADDRESS) + EEPROM.read(TEMP_H3_ADDRESS+1)*10 + EEPROM.read(TEMP_H3_ADDRESS+2)*100 + EEPROM.read(TEMP_H3_ADDRESS+3)*1000;
+  Serial.println(String("Read: ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter 
 }
 
