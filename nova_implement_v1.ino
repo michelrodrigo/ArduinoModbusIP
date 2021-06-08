@@ -39,6 +39,7 @@ bool start_process = false;
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
+int led         = 6;
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -71,6 +72,7 @@ void read_temp_levels();
 void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
   pinMode(outputPin, OUTPUT);
+  pinMode(led, OUTPUT);
 
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   read_setpoint(); //reads from EEPROM
@@ -110,7 +112,7 @@ void loop () {
   myPID.Compute();
   analogWrite(outputPin, Output);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-
+  
 
   //Call once inside loop() - all magic here
    mb.task();
@@ -119,6 +121,13 @@ void loop () {
        ts = millis();
        update_io();
        Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+   }
+
+   if(start_process){
+      digitalWrite(led, HIGH);
+   }
+   else{
+    digitalWrite(led, LOW);
    }
 }
 
