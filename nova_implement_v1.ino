@@ -34,6 +34,8 @@ int newTempH2 = 0;
 int tempH3 = 200; //stores the temperature that defines the events H3 and L3
 int newTempH3 = 0;
 
+bool start_process = false;
+
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
@@ -49,6 +51,7 @@ const int TEMP_STATE_IREG = 4;
 const int TEMP_H1_HREG = 5;
 const int TEMP_H2_HREG = 6;
 const int TEMP_H3_HREG = 7;
+const int START_COIL = 8;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -91,6 +94,7 @@ void setup () {
   mb.addHreg(TEMP_H1_HREG);
   mb.addHreg(TEMP_H2_HREG);
   mb.addHreg(TEMP_H3_HREG);
+  mb.addCoil(START_COIL);
 
 
   ts = millis();
@@ -105,7 +109,7 @@ void loop () {
   myPID.Compute();
   analogWrite(outputPin, Output);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-  Serial.println(tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+  Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
 
   //Call once inside loop() - all magic here
    mb.task();
@@ -181,6 +185,8 @@ void update_io(){
      temp_state = 3;
    }
 
+   start_process = mb.Coil(START_COIL);
+   
    mb.Ireg(TEMP_STATE_IREG, temp_state);
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
