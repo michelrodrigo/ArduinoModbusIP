@@ -110,7 +110,7 @@ void loop () {
   myPID.Compute();
   analogWrite(outputPin, Output);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-  
+
 
   //Call once inside loop() - all magic here
    mb.task();
