@@ -36,6 +36,7 @@ int newTempH3 = 0;
 
 int state_process = 0; //stores the state of the process: 0=idle, 1=running
 int aux = 0; //
+int level = 0; //stores the level of the tank
 
 bool start_process = false;
 bool stop_process = false;
@@ -48,6 +49,7 @@ int sensorPin   = A0;   // The pin the analog sensor is connected to
 int led         = 6;
 int v_in        = 7; // valve in
 int v_out       = 8; // valve out
+int levelSensorPin = A1;
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -64,6 +66,8 @@ const int START_COIL = 8;
 const int STATE_PROCESS_IREG = 9;
 const int V_IN_STATUS = 10;
 const int V_OUT_STATUS = 11;
+const int LEVEL_IREG = 12;
+
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -114,6 +118,7 @@ void setup () {
   mb.addIreg(STATE_PROCESS_IREG);
   mb.addIsts(V_IN_STATUS);
   mb.addIsts(V_OUT_STATUS);
+  mb.addIreg(LEVEL_IREG);
   
 
   ts = millis();
@@ -128,6 +133,7 @@ void loop () {
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   myPID.Compute();
   analogWrite(outputPin, Output);
+  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
   
 
@@ -267,7 +273,9 @@ void update_io(){
    mb.Ireg(TEMP_STATE_IREG, temp_state);
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
-   mb.Ireg(ACTION_IREG, Output);  
+   mb.Ireg(ACTION_IREG, Output); 
+   mb.Ireg(SENSOR_IREG, Input);
+   mb.Ireg(LEVEL_IREG, level);
 }
 
 void update_setpoint(){
