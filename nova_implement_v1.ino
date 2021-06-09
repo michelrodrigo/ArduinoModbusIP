@@ -36,7 +36,7 @@ int newTempH2 = 0;
 int tempH3 = 200; //stores the temperature that defines the events H3 and L3
 int newTempH3 = 0;
 
-int state_process = 0; //stores the state of the process: 0=idle, 1=running
+int state_process = 0; //stores the state of the process: 0=idle, 1=filling tank, 2=heating, 3=draining out
 int aux = 0; //
 int level = 0; //stores the level of the tank
 int maxLevel = 90;
@@ -45,6 +45,7 @@ int stateLevel = 0;
 
 bool start_process = false;
 bool stop_process = false;
+bool drain_out = false;
 bool valve_in = false;
 bool valve_out = false;
 
@@ -148,23 +149,64 @@ void loop () {
   myPID.Compute();
   analogWrite(outputPin, Output);
   level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
-  //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-  
-
+ 
   //Call once inside loop() - all magic here
-   mb.task();
+  mb.task();
 
    if (millis() > ts + 100) {
-       if((state_process == 1) && (aux < 100)){
+       if((state_process == 2) && (aux < 50)){
           aux++;
        }
-       else if(state_process == 1 && aux >= 100){
-          stop_process = true;
+       else if(state_process == 2 && aux >= 50){
+          drain_out = true;
           aux=0;
        }
        ts = millis();
        update_io();
-       Serial.println(maxLevel+String("  ")+start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+       Serial.println(valve_out+String("  ")+start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+   }
+
+   // Temperature
+   if(Input <= tempH1){
+     temp_state = 0;
+   }
+   else if ((Input > tempH1) && (Input <= tempH2)){
+     temp_state = 1;
+   }
+   else if ((Input > tempH2) && (Input <= tempH3)){
+     temp_state = 2;
+   }
+   else if(Input > tempH3){
+     temp_state = 3;
+   }
+
+   // Level
+   if(level < 10){
+      stateLevel = 0;
+   }
+   else if(level >= maxLevel){
+      stateLevel = 1;      
+   }
+
+
+    // Process
+   if(start_process == 1 && state_process == 0){
+      state_process = 1;
+      valve_in = true;      
+   }
+   if(state_process == 1 && stateLevel == 1){
+      state_process = 2;
+      valve_in = false;
+   }
+   if(state_process == 2 && drain_out){
+      state_process = 3;
+      valve_out = true;
+   }
+   if(state_process == 3 && stateLevel == 0 ){
+      state_process = 0;
+      valve_out = false;
+      drain_out = false;
+      
    }
 
    if(start_process){
@@ -269,36 +311,7 @@ void update_io(){
    }
    
 
-   if(Input <= tempH1){
-     temp_state = 0;
-   }
-   else if ((Input > tempH1) && (Input <= tempH2)){
-     temp_state = 1;
-   }
-   else if ((Input > tempH2) && (Input <= tempH3)){
-     temp_state = 2;
-   }
-   else if(Input > tempH3){
-     temp_state = 3;
-   }
-
-   if(level <= maxLevel){
-      stateLevel = 0;
-   }
-   else if(level > maxLevel){
-      stateLevel = 1;
-   }
-    
-   if(start_process == 1 && state_process == 0){
-      state_process = 1;
-      valve_in = true;
-      
-   }
-   if(state_process == 1 && stop_process){
-      state_process = 0;
-      stop_process = false;
-      valve_in = false;
-   }
+   
    
    start_process = mb.Coil(START_COIL);
    
