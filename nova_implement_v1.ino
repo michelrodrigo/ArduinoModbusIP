@@ -39,11 +39,15 @@ int aux = 0; //
 
 bool start_process = false;
 bool stop_process = false;
+bool valve_in = false;
+bool valve_out = false;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
 int led         = 6;
+int v_in        = 7; // valve in
+int v_out       = 8; // valve out
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -58,6 +62,8 @@ const int TEMP_H2_HREG = 6;
 const int TEMP_H3_HREG = 7;
 const int START_COIL = 8;
 const int STATE_PROCESS_IREG = 9;
+const int V_IN_STATUS = 10;
+const int V_OUT_STATUS = 11;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -78,6 +84,8 @@ void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
   pinMode(outputPin, OUTPUT);
   pinMode(led, OUTPUT);
+  pinMode(v_in, OUTPUT);
+  pinMode(v_out, OUTPUT);
 
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   read_setpoint(); //reads from EEPROM
@@ -104,6 +112,9 @@ void setup () {
   mb.addHreg(TEMP_H3_HREG);
   mb.addCoil(START_COIL);
   mb.addIreg(STATE_PROCESS_IREG);
+  mb.addIsts(V_IN_STATUS);
+  mb.addIsts(V_OUT_STATUS);
+  
 
   ts = millis();
 
@@ -141,6 +152,20 @@ void loop () {
    }
    else{
       digitalWrite(led, LOW);
+   }
+
+   if(valve_in){
+      digitalWrite(v_in, HIGH);
+   }
+   else{
+      digitalWrite(v_in, LOW);
+   }
+
+   if(valve_out){
+      digitalWrite(v_out, HIGH);
+   }
+   else{
+      digitalWrite(v_out, LOW);
    }
 
    
@@ -224,14 +249,20 @@ void update_io(){
 
    if(start_process == 1 && state_process == 0){
       state_process = 1;
+      valve_in = true;
+      
    }
    if(state_process == 1 && stop_process){
       state_process = 0;
       stop_process = false;
+      valve_in = false;
    }
    
    start_process = mb.Coil(START_COIL);
-
+   
+   mb.Ists(V_IN_STATUS, valve_in);
+   mb.Ists(V_OUT_STATUS, valve_out);
+  
    mb.Ireg(STATE_PROCESS_IREG, state_process);
    mb.Ireg(TEMP_STATE_IREG, temp_state);
    mb.Ireg(SETPOINT_IREG, Setpoint);
