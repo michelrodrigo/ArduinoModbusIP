@@ -34,11 +34,16 @@ int newTempH2 = 0;
 int tempH3 = 200; //stores the temperature that defines the events H3 and L3
 int newTempH3 = 0;
 
+int state_process = 0; //stores the state of the process: 0=idle, 1=running
+int aux = 0; //
+
 bool start_process = false;
+bool stop_process = false;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
+int led         = 6;
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -52,6 +57,7 @@ const int TEMP_H1_HREG = 5;
 const int TEMP_H2_HREG = 6;
 const int TEMP_H3_HREG = 7;
 const int START_COIL = 8;
+const int STATE_PROCESS_IREG = 9;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -71,6 +77,7 @@ void read_temp_levels();
 void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
   pinMode(outputPin, OUTPUT);
+  pinMode(led, OUTPUT);
 
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   read_setpoint(); //reads from EEPROM
@@ -96,7 +103,7 @@ void setup () {
   mb.addHreg(TEMP_H2_HREG);
   mb.addHreg(TEMP_H3_HREG);
   mb.addCoil(START_COIL);
-
+  mb.addIreg(STATE_PROCESS_IREG);
 
   ts = millis();
 
@@ -106,20 +113,37 @@ void setup () {
 
 void loop () {
 
+  
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   myPID.Compute();
   analogWrite(outputPin, Output);
   //Serial.println(Input+String("  ")+Setpoint+String("  ")+Output+String("  "));;  //look for simulation results in plotter
-
+  
 
   //Call once inside loop() - all magic here
    mb.task();
 
    if (millis() > ts + 100) {
+       if((state_process == 1) && (aux < 100)){
+          aux++;
+       }
+       else if(state_process == 1 && aux >= 100){
+          stop_process = true;
+          aux=0;
+       }
        ts = millis();
        update_io();
-       Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+       Serial.println(start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    }
+
+   if(start_process){
+      digitalWrite(led, HIGH);
+   }
+   else{
+      digitalWrite(led, LOW);
+   }
+
+   
 }
 
 void update_io(){
@@ -198,8 +222,17 @@ void update_io(){
      temp_state = 3;
    }
 
-   start_process = mb.Coil(START_COIL);
+   if(start_process == 1 && state_process == 0){
+      state_process = 1;
+   }
+   if(state_process == 1 && stop_process){
+      state_process = 0;
+      stop_process = false;
+   }
    
+   start_process = mb.Coil(START_COIL);
+
+   mb.Ireg(STATE_PROCESS_IREG, state_process);
    mb.Ireg(TEMP_STATE_IREG, temp_state);
    mb.Ireg(SETPOINT_IREG, Setpoint);
    mb.Ireg(SENSOR_IREG, Input);
