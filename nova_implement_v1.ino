@@ -10,6 +10,8 @@
 
 #define MAX_TEMP 300 // maximum temperature value
 #define MIN_TEMP 10  // minimum temperature value
+#define MAX_LEVEL 100 // maximum temperature value
+#define MIN_LEVEL 10  // minimum temperature value
 
 // Objects and Variables --------------------------------------------------
 
@@ -37,6 +39,8 @@ int newTempH3 = 0;
 int state_process = 0; //stores the state of the process: 0=idle, 1=running
 int aux = 0; //
 int level = 0; //stores the level of the tank
+int maxLevel = 90;
+int newMaxLevel = 0;
 
 bool start_process = false;
 bool stop_process = false;
@@ -67,6 +71,7 @@ const int STATE_PROCESS_IREG = 9;
 const int V_IN_STATUS = 10;
 const int V_OUT_STATUS = 11;
 const int LEVEL_IREG = 12;
+const int MAX_LEVEL_HREG = 13;
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -74,6 +79,7 @@ const int LEVEL_IREG = 12;
 #define TEMP_H1_ADDRESS 4
 #define TEMP_H2_ADDRESS 8
 #define TEMP_H3_ADDRESS 12
+#define MAX_LEVEL_ADDRESS 16
 
 
 // Function headers ------------------------------------------------------
@@ -82,6 +88,8 @@ void update_setpoint();
 void read_setpoint();
 void update_temp_levels();
 void read_temp_levels();
+void update_level_levels();
+void read_level_levels();
 
 
 void setup () {
@@ -94,6 +102,7 @@ void setup () {
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
   read_setpoint(); //reads from EEPROM
   read_temp_levels();
+  read_level_levels();
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    //turn the PID on
   myPID.SetMode(AUTOMATIC);
@@ -119,6 +128,7 @@ void setup () {
   mb.addIsts(V_IN_STATUS);
   mb.addIsts(V_OUT_STATUS);
   mb.addIreg(LEVEL_IREG);
+  mb.addHreg(MAX_LEVEL_HREG);
   
 
   ts = millis();
@@ -150,7 +160,7 @@ void loop () {
        }
        ts = millis();
        update_io();
-       Serial.println(start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+       Serial.println(maxLevel+String("  ")+start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    }
 
    if(start_process){
@@ -236,6 +246,21 @@ void update_io(){
         tempH3 = newTempH3;
         Serial.println("Call from H3");
         update_temp_levels();
+     }
+   }
+
+   newMaxLevel = mb.Hreg(MAX_LEVEL_HREG);
+   if(newMaxLevel != 0){
+     if(newMaxLevel > MAX_LEVEL){
+        newMaxLevel = MAX_LEVEL;
+     }
+     else if(newMaxLevel < MIN_LEVEL){
+        newMaxLevel = MIN_LEVEL; 
+     }
+     if(newMaxLevel != maxLevel){
+        maxLevel = newMaxLevel;
+        Serial.println("Call from max level");
+        update_level_levels();
      }
    }
    
@@ -342,4 +367,20 @@ void read_temp_levels(){
   tempH3 = EEPROM.read(TEMP_H3_ADDRESS) + EEPROM.read(TEMP_H3_ADDRESS+1)*10 + EEPROM.read(TEMP_H3_ADDRESS+2)*100 + EEPROM.read(TEMP_H3_ADDRESS+3)*1000;
   Serial.println(String("Read: ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter 
 }
-
+void update_level_levels(){
+  int value1 = maxLevel / 1000;
+  int aux = maxLevel - value1 * 1000;
+  int value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  int value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(MAX_LEVEL_ADDRESS, aux);
+  EEPROM.update(MAX_LEVEL_ADDRESS+1, value3);
+  EEPROM.update(MAX_LEVEL_ADDRESS+2, value2);
+  EEPROM.update(MAX_LEVEL_ADDRESS+3, value1);  
+  
+}
+void read_level_levels(){
+  maxLevel = EEPROM.read(MAX_LEVEL_ADDRESS) + EEPROM.read(MAX_LEVEL_ADDRESS+1)*10 + EEPROM.read(MAX_LEVEL_ADDRESS+2)*100 + EEPROM.read(MAX_LEVEL_ADDRESS+3)*1000; 
+  
+}
