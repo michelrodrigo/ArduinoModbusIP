@@ -48,6 +48,7 @@ bool stop_process = false;
 bool drain_out = false;
 bool valve_in = false;
 bool valve_out = false;
+bool mixer = false;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -75,7 +76,7 @@ const int V_OUT_STATUS = 11;
 const int LEVEL_IREG = 12;
 const int MAX_LEVEL_HREG = 13;
 const int STATE_LEVEL_IREG = 14;
-
+const int MIXER_STATUS = 15;
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -134,7 +135,7 @@ void setup () {
   mb.addIreg(LEVEL_IREG);
   mb.addHreg(MAX_LEVEL_HREG);
   mb.addIreg(STATE_LEVEL_IREG);
-  
+  mb.addIsts(MIXER_STATUS);
 
   ts = millis();
 
@@ -197,9 +198,11 @@ void loop () {
    if(state_process == 1 && stateLevel == 1){
       state_process = 2;
       valve_in = false;
+      mixer = true;
    }
    if(state_process == 2 && drain_out){
       state_process = 3;
+      mixer = false;
       valve_out = true;
    }
    if(state_process == 3 && stateLevel == 0 ){
@@ -317,6 +320,7 @@ void update_io(){
    
    mb.Ists(V_IN_STATUS, valve_in);
    mb.Ists(V_OUT_STATUS, valve_out);
+   mb.Ists(MIXER_STATUS, mixer);
   
    mb.Ireg(STATE_PROCESS_IREG, state_process);
    mb.Ireg(TEMP_STATE_IREG, temp_state);
