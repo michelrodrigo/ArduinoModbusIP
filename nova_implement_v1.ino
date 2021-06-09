@@ -41,6 +41,7 @@ int aux = 0; //
 int level = 0; //stores the level of the tank
 int maxLevel = 90;
 int newMaxLevel = 0;
+int stateLevel = 0;
 
 bool start_process = false;
 bool stop_process = false;
@@ -72,6 +73,8 @@ const int V_IN_STATUS = 10;
 const int V_OUT_STATUS = 11;
 const int LEVEL_IREG = 12;
 const int MAX_LEVEL_HREG = 13;
+const int STATE_LEVEL_IREG = 14;
+
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -129,6 +132,7 @@ void setup () {
   mb.addIsts(V_OUT_STATUS);
   mb.addIreg(LEVEL_IREG);
   mb.addHreg(MAX_LEVEL_HREG);
+  mb.addIreg(STATE_LEVEL_IREG);
   
 
   ts = millis();
@@ -278,6 +282,13 @@ void update_io(){
      temp_state = 3;
    }
 
+   if(level <= maxLevel){
+      stateLevel = 0;
+   }
+   else if(level > maxLevel){
+      stateLevel = 1;
+   }
+    
    if(start_process == 1 && state_process == 0){
       state_process = 1;
       valve_in = true;
@@ -301,6 +312,7 @@ void update_io(){
    mb.Ireg(ACTION_IREG, Output); 
    mb.Ireg(SENSOR_IREG, Input);
    mb.Ireg(LEVEL_IREG, level);
+   mb.Ireg(STATE_LEVEL_IREG, stateLevel);
 }
 
 void update_setpoint(){
