@@ -12,6 +12,8 @@
 #define MIN_TEMP 10  // minimum temperature value
 #define MAX_LEVEL 100 // maximum temperature value
 #define MIN_LEVEL 10  // minimum temperature value
+#define MAX_TIMER 30 // maximum time for the mixer
+#define MIN_TIMER 2  // minimum time for the mixer
 
 // Objects and Variables --------------------------------------------------
 
@@ -42,6 +44,8 @@ int level = 0; //stores the level of the tank
 int maxLevel = 90;
 int newMaxLevel = 0;
 int stateLevel = 0;
+int timerMixer = 10; 
+int newTimerMixer = 0;
 
 bool start_process = false;
 bool stop_process = false;
@@ -77,6 +81,7 @@ const int LEVEL_IREG = 12;
 const int MAX_LEVEL_HREG = 13;
 const int STATE_LEVEL_IREG = 14;
 const int MIXER_STATUS = 15;
+const int TIMER_MIXER_HREG = 16;
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -85,6 +90,7 @@ const int MIXER_STATUS = 15;
 #define TEMP_H2_ADDRESS 8
 #define TEMP_H3_ADDRESS 12
 #define MAX_LEVEL_ADDRESS 16
+#define TIMER_MIXER_ADDRESS 20
 
 
 // Function headers ------------------------------------------------------
@@ -136,6 +142,7 @@ void setup () {
   mb.addHreg(MAX_LEVEL_HREG);
   mb.addIreg(STATE_LEVEL_IREG);
   mb.addIsts(MIXER_STATUS);
+  mb.addHreg(TIMER_MIXER_HREG);
 
   ts = millis();
 
@@ -155,10 +162,10 @@ void loop () {
   mb.task();
 
    if (millis() > ts + 100) {
-       if((state_process == 2) && (aux < 50)){
+       if((state_process == 2) && (aux < timerMixer)){
           aux++;
        }
-       else if(state_process == 2 && aux >= 50){
+       else if(state_process == 2 && aux >= timerMixer){
           drain_out = true;
           aux=0;
        }
@@ -312,6 +319,21 @@ void update_io(){
         update_level_levels();
      }
    }
+
+   newTimerMixer = mb.Hreg(TIMER_MIXER_HREG);
+   if(newTimerMixer != 0){
+     if(newTimerMixer > MAX_TIMER){
+        newTimerMixer = MAX_TIMER;
+     }
+     else if(newTimerMixer < MIN_TIMER){
+        newTimerMixer = MIN_TIMER; 
+     }
+     if(newTimerMixer != timerMixer){
+        timerMixer = newTimerMixer;
+        Serial.println("Call from timer mixer");
+        update_level_levels();
+     }
+   }
    
 
    
@@ -407,9 +429,22 @@ void update_level_levels(){
   EEPROM.update(MAX_LEVEL_ADDRESS+1, value3);
   EEPROM.update(MAX_LEVEL_ADDRESS+2, value2);
   EEPROM.update(MAX_LEVEL_ADDRESS+3, value1);  
+
+  value1 = timerMixer / 1000;
+  aux = timerMixer - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TIMER_MIXER_ADDRESS, aux);
+  EEPROM.update(TIMER_MIXER_ADDRESS+1, value3);
+  EEPROM.update(TIMER_MIXER_ADDRESS+2, value2);
+  EEPROM.update(TIMER_MIXER_ADDRESS+3, value1);  
+  
   
 }
 void read_level_levels(){
   maxLevel = EEPROM.read(MAX_LEVEL_ADDRESS) + EEPROM.read(MAX_LEVEL_ADDRESS+1)*10 + EEPROM.read(MAX_LEVEL_ADDRESS+2)*100 + EEPROM.read(MAX_LEVEL_ADDRESS+3)*1000; 
+  timerMixer = EEPROM.read(TIMER_MIXER_ADDRESS) + EEPROM.read(TIMER_MIXER_ADDRESS+1)*10 + EEPROM.read(TIMER_MIXER_ADDRESS+2)*100 + EEPROM.read(TIMER_MIXER_ADDRESS+3)*1000; 
   
 }
