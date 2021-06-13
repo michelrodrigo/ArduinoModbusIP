@@ -46,6 +46,7 @@ int newMaxLevel = 0;
 int stateLevel = 0;
 int timerMixer = 10; 
 int newTimerMixer = 0;
+int error = 0;
 
 bool start_process = false;
 bool stop_process = false;
@@ -53,6 +54,7 @@ bool drain_out = false;
 bool valve_in = false;
 bool valve_out = false;
 bool mixer = false;
+bool enter_state = true;
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -146,6 +148,8 @@ void setup () {
 
   ts = millis();
 
+  randomSeed(analogRead(A5));
+
   delay(5000);
 
 }
@@ -153,19 +157,27 @@ void setup () {
 void loop () {
 
   
-  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
-  myPID.Compute();
-  analogWrite(outputPin, Output);
+
   level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
+  analogWrite(outputPin, Output);
+  if(state_process == 2){
+      myPID.Compute();      
+      error = Setpoint - Input;
+  }
  
   //Call once inside loop() - all magic here
   mb.task();
 
    if (millis() > ts + 100) {
-       if((state_process == 2) && (aux < timerMixer)){
+       
+       if((state_process == 2) && (aux/10 < timerMixer)){
           aux++;
+          if(error > abs(2)){
+            aux = 0; 
+          }          
        }
-       else if(state_process == 2 && aux >= timerMixer){
+       else if(state_process == 2 && aux/10 >= timerMixer){
           drain_out = true;
           aux=0;
        }
@@ -199,23 +211,32 @@ void loop () {
 
     // Process
    if(start_process == 1 && state_process == 0){
+    if(enter_state){
+        enter_state = false;
+        Output = random(10, 255);
+        analogWrite(outputPin, Output);
+      }
       state_process = 1;
       valve_in = true;      
    }
    if(state_process == 1 && stateLevel == 1){
+      
       state_process = 2;
       valve_in = false;
       mixer = true;
+      
    }
    if(state_process == 2 && drain_out){
       state_process = 3;
       mixer = false;
       valve_out = true;
+      Output = 0;
    }
    if(state_process == 3 && stateLevel == 0 ){
       state_process = 0;
       valve_out = false;
       drain_out = false;
+      enter_state = true;
       
    }
 
