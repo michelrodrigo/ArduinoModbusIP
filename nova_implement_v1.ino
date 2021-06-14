@@ -21,8 +21,8 @@
 ModbusIP mb;
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output;
-double newSetpoint;
+double Setpoint, Input, Output, Setpoint2;
+int newSetpoint, newSetpoint2;
 
 //Specify the links and initial tuning parameters
 double Kp=2, Ki=5, Kd=1;
@@ -54,7 +54,8 @@ bool drain_out = false;
 bool valve_in = false;
 bool valve_out = false;
 bool mixer = false;
-bool enter_state = true;
+bool cool = false;
+
 
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
@@ -84,6 +85,7 @@ const int MAX_LEVEL_HREG = 13;
 const int STATE_LEVEL_IREG = 14;
 const int MIXER_STATUS = 15;
 const int TIMER_MIXER_HREG = 16;
+const int SETPOINT2_HREG = 17;
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -93,6 +95,7 @@ const int TIMER_MIXER_HREG = 16;
 #define TEMP_H3_ADDRESS 12
 #define MAX_LEVEL_ADDRESS 16
 #define TIMER_MIXER_ADDRESS 20
+#define TEMP2_SETPOINT_ADDRESS 24
 
 
 // Function headers ------------------------------------------------------
@@ -145,6 +148,7 @@ void setup () {
   mb.addIreg(STATE_LEVEL_IREG);
   mb.addIsts(MIXER_STATUS);
   mb.addHreg(TIMER_MIXER_HREG);
+  mb.addHreg(SETPOINT2_HREG);
 
   ts = millis();
 
@@ -161,29 +165,85 @@ void loop () {
   level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   analogWrite(outputPin, Output);
-  if(state_process == 2){
-      myPID.Compute();      
-      error = Setpoint - Input;
-  }
+  
  
   //Call once inside loop() - all magic here
   mb.task();
 
    if (millis() > ts + 100) {
-       
-       if((state_process == 2) && (aux/10 < timerMixer)){
-          aux++;
-          if(error > abs(2)){
-            aux = 0; 
-          }          
-       }
-       else if(state_process == 2 && aux/10 >= timerMixer){
-          drain_out = true;
-          aux=0;
-       }
        ts = millis();
        update_io();
-       Serial.println(valve_out+String("  ")+start_process+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
+       Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
+
+        // Process transitions
+       if(state_process == 0 && start_process == 1){
+          Output = random(10, 255);
+          analogWrite(outputPin, Output);  
+          state_process = 1;
+          valve_in = true;      
+       }
+       if(state_process == 1 && stateLevel == 1){      
+          state_process = 2;
+          valve_in = false;
+          mixer = true;
+          
+       }
+       if(state_process == 2 && cool){
+          state_process = 3;
+          aux = 0;
+          
+       }
+       if(state_process == 3 && drain_out){
+          state_process = 4;
+          mixer = false;
+          valve_out = true;
+          Output = 0;
+       }
+       if(state_process == 4 && stateLevel == 0 ){
+          state_process = 0;
+          valve_out = false;
+          drain_out = false;
+          cool = false;     
+       }
+    
+       //Process states
+       switch(state_process){
+          case(0):
+            aux = 0;
+            break;
+          case(1):        
+            break;
+          case(2):
+            myPID.Compute();      
+            error = Setpoint - Input;
+            if(aux/10 < timerMixer){
+              aux++;
+              if(abs(error) > 5){
+                aux = 0; 
+              }
+            }
+            else{
+              cool = true;
+            }
+            break;
+          case(3):
+              Setpoint = Setpoint2;
+              myPID.Compute();     
+              error = Setpoint - Input;
+              if(aux/10 < timerMixer){
+                aux++;
+                if(abs(error) > 5){
+                  aux = 0; 
+                }
+              }
+              else{
+                drain_out = true;
+              }        
+              break;
+        
+       }
+       
+   
    }
 
    // Temperature
@@ -209,36 +269,7 @@ void loop () {
    }
 
 
-    // Process
-   if(start_process == 1 && state_process == 0){
-    if(enter_state){
-        enter_state = false;
-        Output = random(10, 255);
-        analogWrite(outputPin, Output);
-      }
-      state_process = 1;
-      valve_in = true;      
-   }
-   if(state_process == 1 && stateLevel == 1){
-      
-      state_process = 2;
-      valve_in = false;
-      mixer = true;
-      
-   }
-   if(state_process == 2 && drain_out){
-      state_process = 3;
-      mixer = false;
-      valve_out = true;
-      Output = 0;
-   }
-   if(state_process == 3 && stateLevel == 0 ){
-      state_process = 0;
-      valve_out = false;
-      drain_out = false;
-      enter_state = true;
-      
-   }
+   
 
    if(start_process){
       digitalWrite(led, HIGH);
@@ -277,6 +308,20 @@ void update_io(){
      }
      if(newSetpoint != Setpoint){
         Setpoint = newSetpoint;
+        update_setpoint();
+     }
+   }
+
+   newSetpoint2 = mb.Hreg(SETPOINT2_HREG);
+   if(newSetpoint2 != 0){
+     if(newSetpoint2 > MAX_TEMP){
+        newSetpoint2 = MAX_TEMP;
+     }
+     else if(newSetpoint2 < MIN_TEMP){
+        newSetpoint2 = MIN_TEMP; 
+     }
+     if(newSetpoint2 != Setpoint2){
+        Setpoint2 = newSetpoint2;
         update_setpoint();
      }
    }
@@ -360,7 +405,7 @@ void update_io(){
    
    
    start_process = mb.Coil(START_COIL);
-   
+
    mb.Ists(V_IN_STATUS, valve_in);
    mb.Ists(V_OUT_STATUS, valve_out);
    mb.Ists(MIXER_STATUS, mixer);
@@ -387,11 +432,23 @@ void update_setpoint(){
   EEPROM.update(TEMP_SETPOINT_ADDRESS, aux);
   EEPROM.update(TEMP_SETPOINT_ADDRESS+1, value3);
   EEPROM.update(TEMP_SETPOINT_ADDRESS+2, value2);
-  EEPROM.update(TEMP_SETPOINT_ADDRESS+3, value1);  
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+3, value1); 
+
+  value1 = Setpoint2 / 1000;
+  aux = Setpoint2 - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS, aux);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+1, value3);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+2, value2);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+3, value1);
 }
 
 void read_setpoint(){  
   Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
+  Setpoint2 = EEPROM.read(TEMP2_SETPOINT_ADDRESS) + EEPROM.read(TEMP2_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+3)*1000; 
 }
 
 void update_temp_levels(){
