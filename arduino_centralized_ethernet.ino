@@ -55,7 +55,7 @@ bool valve_in = false;
 bool valve_out = false;
 bool mixer = false;
 bool cool = false;
-bool bomb = false;
+bool pump = false;
 
 
 // Pins -------------------------------------------------------------------
@@ -87,7 +87,7 @@ const int STATE_LEVEL_IREG = 14;
 const int MIXER_STATUS = 15;
 const int TIMER_MIXER_HREG = 16;
 const int SETPOINT2_HREG = 17;
-const int BOMB = 18;
+const int PUMP = 18;
 
 
 // EEPROM ADDRESSES ------------------------------------------------------
@@ -151,7 +151,7 @@ void setup () {
   mb.addIsts(MIXER_STATUS);
   mb.addHreg(TIMER_MIXER_HREG);
   mb.addHreg(SETPOINT2_HREG);
-  mb.addIsts(BOMB);
+  mb.addIsts(PUMP);
 
   ts = millis();
 
@@ -194,7 +194,7 @@ void loop () {
        if(state_process == 2 && cool){
           state_process = 3;
           aux = 0;
-          bomb = true;
+          pump = true;
           
        }
        if(state_process == 3 && drain_out){
@@ -202,7 +202,7 @@ void loop () {
           mixer = false;
           valve_out = true;
           Output = 0;
-          bomb = false;
+          pump = false;
        }
        if(state_process == 4 && stateLevel == 0 ){
           state_process = 0;
@@ -413,7 +413,7 @@ void update_io(){
 
    mb.Ists(V_IN_STATUS, valve_in);
    mb.Ists(V_OUT_STATUS, valve_out);
-   mb.Ists(BOMB, bomb);
+   mb.Ists(PUMP, pump);
    mb.Ists(MIXER_STATUS, mixer);
   
    mb.Ireg(STATE_PROCESS_IREG, state_process);
