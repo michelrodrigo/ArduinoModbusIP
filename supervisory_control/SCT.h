@@ -1,17 +1,18 @@
-// This file is part of arduino-fsm.
-//
-// arduino-fsm is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option)
-// any later version.
-//
-// arduino-fsm is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with arduino-fsm.  If not, see <http://www.gnu.org/licenses/>.
+/*---------------------------------------
+
+ Supervisory control
+
+This library implements the automata in the Supervisory Control framework
+
+There is two types of automata:
+- generic
+- supervisor
+
+The generic one is used to implement the model of the plant. The supervisor is used to implement the supervisory control. 
+
+Author: Michel Alves - michelrodrigo@ufmg.br
+Created in 22/06/2021
+*/
 
 #ifndef FSM_H
 #define FSM_H
@@ -24,10 +25,6 @@
 #endif
 
 
-struct Event{
-	int pino; // se o número do pino é igual a zero, então o evento é controlável
-};
-
 struct State
 {
   State(void (*on_enter)(), void (*on_exit)());
@@ -37,11 +34,11 @@ struct State
 };
 
 
-class Fsm
+class Automaton
 {
 public:
-  Fsm(State* initial_state);
-  ~Fsm();
+  Automaton(State* initial_state);
+  ~Automaton();
 
   void add_transition(State* state_from, State* state_to, int event,
                       void (*on_transition)());
@@ -81,22 +78,22 @@ private:
   int m_num_timed_transitions;
 };
 
-class Supervisor : public Fsm{
+class Supervisor : public Automaton{
 
 public:
 	Supervisor(State* initial_state);
-	void desabilita(int evento);
-	void habilita(int evento);
-	bool verifica(int evento);
+	void disable(int event);
+	void enable(int event);
+	bool is_disabled(int event);
 	
 
 private:
-	int desabilitacao;
+	int disablements;
 
 
 };
 
-class SO: public Fsm{
+class SO: public Automaton{
 	
 public:
 	SO(State* initial_state);

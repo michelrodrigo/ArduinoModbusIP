@@ -1,19 +1,20 @@
-// This file is part of arduino-fsm.
-//
-// arduino-fsm is free software: you can redistribute it and/or modify it under
-// the terms of the GNU Lesser General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option)
-// any later version.
-//
-// arduino-fsm is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with arduino-fsm.  If not, see <http://www.gnu.org/licenses/>.
+/*---------------------------------------
 
-#include "Fsm.h"
+ Supervisory control
+
+This library implements the automata in the Supervisory Control framework
+
+There is two types of automata:
+- generic
+- supervisor
+
+The generic one is used to implement the model of the plant. The supervisor is used to implement the supervisory control. 
+
+Author: Michel Alves - michelrodrigo@ufmg.br
+Created in 22/06/2021
+*/
+
+#include "SCT.h"
 
 
 State::State(void (*on_enter)(), void (*on_exit)()): 
@@ -23,7 +24,7 @@ State::State(void (*on_enter)(), void (*on_exit)()):
 }
 
 
-Fsm::Fsm(State* initial_state)
+Automaton::Automaton(State* initial_state)
 : m_current_state(initial_state),
   m_transitions(NULL),
   m_num_transitions(0)
@@ -31,7 +32,7 @@ Fsm::Fsm(State* initial_state)
 }
 
 
-Fsm::~Fsm()
+Automaton::~Automaton()
 {
   free(m_transitions);
   free(m_timed_transitions);
@@ -40,13 +41,13 @@ Fsm::~Fsm()
 }
 
 
-void Fsm::add_transition(State* state_from, State* state_to, int event,
+void Automaton::add_transition(State* state_from, State* state_to, int event,
                          void (*on_transition)())
 {
   if (state_from == NULL || state_to == NULL)
     return;
 
-  Transition transition = Fsm::create_transition(state_from, state_to, event,
+  Transition transition = Automaton::create_transition(state_from, state_to, event,
                                                on_transition);
   m_transitions = (Transition*) realloc(m_transitions, (m_num_transitions + 1)
                                                        * sizeof(Transition));
@@ -55,13 +56,13 @@ void Fsm::add_transition(State* state_from, State* state_to, int event,
 }
 
 
-void Fsm::add_timed_transition(State* state_from, State* state_to,
+void Automaton::add_timed_transition(State* state_from, State* state_to,
                                unsigned long interval, void (*on_transition)())
 {
   if (state_from == NULL || state_to == NULL)
     return;
 
-  Transition transition = Fsm::create_transition(state_from, state_to, 0,
+  Transition transition = Automaton::create_transition(state_from, state_to, 0,
                                                  on_transition);
 
   TimedTransition timed_transition;
@@ -76,7 +77,7 @@ void Fsm::add_timed_transition(State* state_from, State* state_to,
 }
 
 
-Fsm::Transition Fsm::create_transition(State* state_from, State* state_to,
+Automaton::Transition Automaton::create_transition(State* state_from, State* state_to,
                                        int event, void (*on_transition)())
 {
   Transition t;
@@ -88,7 +89,7 @@ Fsm::Transition Fsm::create_transition(State* state_from, State* state_to,
   return t;
 }
 
-void Fsm::trigger(int event)
+void Automaton::trigger(int event)
 {
   // Find the transition with the current state and given event.
   for (int i = 0; i < m_num_transitions; ++i)
@@ -103,7 +104,7 @@ void Fsm::trigger(int event)
 }
 
 
-void Fsm::check_timer()
+void Automaton::check_timer()
 {
   for (int i = 0; i < m_num_timed_transitions; ++i)
   {
@@ -128,7 +129,7 @@ void Fsm::check_timer()
 }
 
 
-State* Fsm::Transition::make_transition()
+State* Automaton::Transition::make_transition()
 {
   // Execute the handlers in the correct order.
   if (state_from->on_exit != NULL)
@@ -145,29 +146,29 @@ State* Fsm::Transition::make_transition()
 
 
 Supervisor::Supervisor(State* initial_state):
-	Fsm(initial_state)
+	Automaton(initial_state)
 {
-	desabilitacao = 0;
+	disablements = 0;
 }
 
-//o evento está desabilitado quando seu bit correspondente é 1
-void Supervisor::desabilita(int evento)
+//the event is disabled when its corresponding bit is 1
+void Supervisor::disable(int event)
 {
-	this->desabilitacao |= (1<<evento);
+	this->disablements |= (1<<event);
 }
 
-void Supervisor::habilita(int evento)
+void Supervisor::enable(int event)
 {
-	this->desabilitacao &= ~(1<<evento);
+	this->disablements &= ~(1<<event);
 }
 
-bool Supervisor::verifica(int evento)
+bool Supervisor::is_disabled(int event)
 {
-	return this->desabilitacao & (1<<evento);
+	return this->disablements & (1<<event);
 }
 
 SO::SO(State* initial_state):
-	Fsm(initial_state)
+	Automaton(initial_state)
 {
 //	if 
 }

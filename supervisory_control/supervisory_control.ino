@@ -46,10 +46,10 @@ State S1_2(&S1_2_action, NULL);
 State S1_3(&S1_3_action, NULL);
 
 
-Fsm VIN(&VIN_0);
-Fsm VOUT(&VOUT_0);
-Fsm HI_LEVEL(&HI_LEVEL_0);
-Fsm LO_LEVEL(&LO_LEVEL_0);
+Automaton VIN(&VIN_0);
+Automaton VOUT(&VOUT_0);
+Automaton HI_LEVEL(&HI_LEVEL_0);
+Automaton LO_LEVEL(&LO_LEVEL_0);
 
 Supervisor S1(&S1_0);
 
