@@ -23,6 +23,11 @@ void TANK_0_action();
 void TANK_1_action();
 void S1_0_action();
 void S1_1_action();
+void S2_0_action();
+void S2_1_action();
+void S3_0_action();
+void S3_1_action();
+
 
 
 //State declaration
@@ -44,6 +49,14 @@ State TANK_3(&TANK_3_action, NULL);
 State S1_0(&S1_0_action, NULL);
 State S1_1(&S1_1_action, NULL);
 
+// Supervisor of specification E2 - states
+State S2_0(&S2_0_action, NULL);
+State S2_1(&S2_1_action, NULL);
+
+// Supervisor of specification E3 - states
+State S3_0(&S3_0_action, NULL);
+State S3_1(&S3_1_action, NULL);
+
 
 //Automata declaration
 Automaton VIN(&VIN_0);
@@ -52,6 +65,8 @@ Automaton TANK(&TANK_0);
 
 
 Supervisor S1(&S1_0);
+Supervisor S2(&S2_0);
+Supervisor S3(&S3_0);
 
 int incomingByte = 0; // for incoming serial data
 
@@ -82,11 +97,31 @@ void setup() {
   S1.add_transition(&S1_1, &S1_0, level_L1, NULL);
   S1.add_transition(&S1_1, &S1_0, close_vin, NULL);
   S1.add_transition(&S1_1, &S1_0, close_vout, NULL);
+
+  S2.add_transition(&S2_0, &S2_0, init, NULL); 
+  S2.add_transition(&S2_0, &S2_0, close_vin, NULL);
+  S2.add_transition(&S2_0, &S2_0, open_vout, NULL);
+  S2.add_transition(&S2_0, &S2_0, close_vout, NULL);
+  S2.add_transition(&S2_0, &S2_0, level_L1, NULL);
+  S2.add_transition(&S2_0, &S2_1, open_vin, NULL);
+  S2.add_transition(&S2_1, &S2_1, close_vout, NULL);
+  S2.add_transition(&S2_1, &S2_0, level_H1, NULL);
+
+  S3.add_transition(&S3_0, &S3_0, init, NULL); 
+  S3.add_transition(&S3_0, &S3_0, close_vin, NULL);
+  S3.add_transition(&S3_0, &S3_0, open_vin, NULL);
+  S3.add_transition(&S3_0, &S3_0, close_vout, NULL);
+  S3.add_transition(&S3_0, &S3_0, level_H1, NULL);
+  S3.add_transition(&S3_0, &S3_1, open_vout, NULL);
+  S3.add_transition(&S3_1, &S3_1, close_vin, NULL);
+  S3.add_transition(&S3_1, &S3_0, level_L1, NULL);
   
   
   Serial.begin(9600);
 
   S1.trigger(init); //executes initial event for the supervisor
+  S2.trigger(init); //executes initial event for the supervisor
+  S3.trigger(init); //executes initial event for the supervisor
   
 }
 
@@ -136,5 +171,12 @@ void loop() {
 //returns false, otherwise
 bool is_disabled_global(int event)
 {
-  return S1.is_disabled(event); //|| S2.verifica(evento);
+  return S1.is_disabled(event) || S2.is_disabled(event) || S3.is_disabled(event);
+}
+
+void supervisor_trigger(int event){
+  S1.trigger(event);
+  S2.trigger(event);
+  S3.trigger(event);
+  
 }
