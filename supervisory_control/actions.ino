@@ -18,42 +18,36 @@ void VOUT_1_action(){
   S1.trigger(open_vout);
 }
 
-void HI_LEVEL_0_action(){
+void TANK_0_action(){
+  Serial.println("esvaziou");
+  S1.trigger(level_L1);
+}
+
+void TANK_1_action(){
+    Serial.println("enchendo");
+    S1.trigger(open_vin);
+}
+
+void TANK_2_action(){
   Serial.println("encheu");
-  S1.trigger(full);
+  S1.trigger(level_H1);
 }
 
-void LO_LEVEL_0_action(){
-    Serial.println("esvaziou");
-    S1.trigger(empty);
+void TANK_3_action(){
+    Serial.println("esvaziando");
+    S1.trigger(open_vout);
 }
-
 
 void S1_0_action(){
-    S1.desabilita(open_vout);
-    S1.habilita(open_vin);
+    S1.enable(open_vin);
+    S1.enable(open_vout);
     Serial.println("S1 estado 0: ");
-    
     
 }
 
 void S1_1_action(){
-    S1.desabilita(open_vout);
-    S1.habilita(close_vin);
+    S1.disable(open_vin);
+    S1.disable(open_vout);
     Serial.println("S1 estado 1: ");
     //Serial.println(S1.verifica(a2));
-}
-
-void S1_2_action(){
-    S1.desabilita(open_vin);
-    S1.habilita(open_vout);
-    Serial.println("S1 estado 2: ");
-    Serial.println(S1.verifica(close_vout));
-}
-
-void S1_3_action(){
-    S1.desabilita(open_vin);
-    S1.habilita(close_vout);
-    Serial.println("S1 estado 3: ");
-    //Serial.println(desabilitacao);
 }
