@@ -75,7 +75,7 @@ private:
 private:
   State* m_current_state;
   Transition* m_transitions;
-  char* m_feasibility;
+  int* m_feasibility;
   int m_num_transitions;
 
   TimedTransition* m_timed_transitions;

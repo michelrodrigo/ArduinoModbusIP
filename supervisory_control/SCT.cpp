@@ -57,11 +57,17 @@ void Automaton::add_transition(State* state_from, State* state_to, int event,
   m_transitions[m_num_transitions] = transition;
   m_num_transitions++;
   
+  //TODO: RESOLVER ESSE PROBLEMA. usar o evento como índice não dá certo
   if(m_feasibility[event] == NULL){
-	m_feasibility = (char*) realloc(m_feasibility, (m_num_transitions + 1)* sizeof(char));
+	  m_feasibility = (int*) realloc(m_feasibility, (m_num_transitions + 1)* sizeof(int));
+    m_feasibility[event] = 0;
   }
+  
+  Serial.print("Fs: ");
+  Serial.print(event);
+  Serial.print(1<<state_from->num_state);
   m_feasibility[event] |= (1<<state_from->num_state);
-
+  Serial.println(String(" ")+ m_feasibility[event]);
 
 }
 
