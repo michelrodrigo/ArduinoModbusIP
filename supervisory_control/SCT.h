@@ -27,10 +27,11 @@ Created in 22/06/2021
 
 struct State
 {
-  State(void (*on_enter)(), void (*on_exit)());
+  State(void (*on_enter)(), void (*on_exit)(), char num_state);
 
   void (*on_enter)();
   void (*on_exit)();
+  char num_state;
 };
 
 
@@ -47,6 +48,8 @@ public:
                             unsigned long interval, void (*on_transition)());
 
   void trigger(int event);
+  bool is_defined(int event);
+  bool is_feasible(int event);
   void check_timer();
 
 private:
@@ -72,6 +75,7 @@ private:
 private:
   State* m_current_state;
   Transition* m_transitions;
+  char* m_feasibility;
   int m_num_transitions;
 
   TimedTransition* m_timed_transitions;
@@ -93,10 +97,22 @@ private:
 
 };
 
-class SO: public Automaton{
+class DES
+{
 	
 public:
-	SO(State* initial_state);
+  DES();
+	void add_plant(Automaton* plant);
+	void add_supervisor(Supervisor* sup);
+	void trigger_if_possible(int event);
+  void trigger_supervisors(int event);
+
+
+private:
+	Automaton** m_plants;
+	Supervisor** m_supervisors;
+	int m_num_plants;
+	int m_num_sups;
 
 };
 

@@ -1,41 +1,33 @@
 void VIN_0_action(){
    Serial.println("VIN estado 0");
-   supervisor_trigger(close_vin);
 }
 
 void VIN_1_action(){
     Serial.println("VIN estado 1");
-    supervisor_trigger(open_vin);
 }
 
 void VOUT_0_action(){
     Serial.println("VOUT estado 0");
-    supervisor_trigger(close_vout);
 }
 
 void VOUT_1_action(){
   Serial.println("VOUT estado 1");
-  supervisor_trigger(open_vout);
 }
 
 void TANK_0_action(){
   Serial.println("esvaziou");
-  supervisor_trigger(level_L1);
 }
 
 void TANK_1_action(){
     Serial.println("enchendo");
-    supervisor_trigger(open_vin);
 }
 
 void TANK_2_action(){
   Serial.println("encheu");
-  supervisor_trigger(level_H1);
 }
 
 void TANK_3_action(){
     Serial.println("esvaziando");
-    supervisor_trigger(open_vout);
 }
 
 void S1_0_action(){
