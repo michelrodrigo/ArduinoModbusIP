@@ -24,23 +24,20 @@ Created in 22/06/2021
   #include <WProgram.h>
 #endif
 
-#include "Arduino_AVRSTL.h"
-#include "map"
 
 struct State
 {
-  State(void (*on_enter)(), void (*on_exit)(), char num_state);
+  State(void (*on_enter)(), void (*on_exit)());
 
   void (*on_enter)();
   void (*on_exit)();
-  char num_state;
 };
 
 
 class Automaton
 {
 public:
-  Automaton(State* initial_state, int num_events);
+  Automaton(State* initial_state);
   ~Automaton();
 
   void add_transition(State* state_from, State* state_to, int event,
@@ -50,8 +47,6 @@ public:
                             unsigned long interval, void (*on_transition)());
 
   void trigger(int event);
-  bool is_defined(int event);
-  bool is_feasible(int event);
   void check_timer();
 
 private:
@@ -77,9 +72,7 @@ private:
 private:
   State* m_current_state;
   Transition* m_transitions;
-  std::map<int,int>  m_feasibility;
   int m_num_transitions;
-  int m_num_events;
 
   TimedTransition* m_timed_transitions;
   int m_num_timed_transitions;
@@ -88,7 +81,7 @@ private:
 class Supervisor : public Automaton{
 
 public:
-	Supervisor(State* initial_state, int num_events);
+	Supervisor(State* initial_state);
 	void disable(int event);
 	void enable(int event);
 	bool is_disabled(int event);
@@ -100,22 +93,10 @@ private:
 
 };
 
-class DES
-{
+class SO: public Automaton{
 	
 public:
-  DES();
-	void add_plant(Automaton* plant);
-	void add_supervisor(Supervisor* sup);
-	void trigger_if_possible(int event);
-  void trigger_supervisors(int event);
-
-
-private:
-	Automaton** m_plants;
-	Supervisor** m_supervisors;
-	int m_num_plants;
-	int m_num_sups;
+	SO(State* initial_state);
 
 };
 
