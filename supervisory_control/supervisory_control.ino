@@ -1,5 +1,6 @@
 #include "SCT.h"
 
+
 //Event declaration
 //Controllable events are assigned to odd numbers, while uncontrollable events are assigned to even numbers.
 int controllable_events[] = {1, 3, 5, 7, 9};
@@ -59,14 +60,14 @@ State S3_1(&S3_1_action, NULL, 1);
 
 
 //Automata declaration
-Automaton VIN(&VIN_0);
-Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
+Automaton VIN(&VIN_0, 2);
+Automaton VOUT(&VOUT_0, 2);
+Automaton TANK(&TANK_0, 4);
 
 
-Supervisor S1(&S1_0);
-Supervisor S2(&S2_0);
-Supervisor S3(&S3_0);
+Supervisor S1(&S1_0, 6);
+Supervisor S2(&S2_0, 6);
+Supervisor S3(&S3_0, 6);
 
 DES System;
 int incomingByte = 0; // for incoming serial data
@@ -76,12 +77,15 @@ void setup() {
   Serial.begin(9600);
 
   //Transition declaration
+  Serial.println("VIN");
   VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
   VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);  
   
+  Serial.println("VOUT");
   VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
   VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
   
+  Serial.println("TANK");
   TANK.add_transition(&TANK_0, &TANK_1, open_vin, NULL);  
   TANK.add_transition(&TANK_1, &TANK_2, level_H1, NULL);
   TANK.add_transition(&TANK_2, &TANK_3, open_vout, NULL);
@@ -89,6 +93,7 @@ void setup() {
 
   //each supervisor needs a init event that is executed upon initialization. This way
   //the on enter function of the initial state is executed and the enablements/disablements are set 
+  Serial.println("S1");
   S1.add_transition(&S1_0, &S1_0, init, NULL); 
   S1.add_transition(&S1_0, &S1_0, open_vin, NULL);
   S1.add_transition(&S1_0, &S1_0, open_vout, NULL);
@@ -101,6 +106,7 @@ void setup() {
   S1.add_transition(&S1_1, &S1_0, close_vin, NULL);
   S1.add_transition(&S1_1, &S1_0, close_vout, NULL);
 
+  Serial.println("S2");
   S2.add_transition(&S2_0, &S2_0, init, NULL); 
   S2.add_transition(&S2_0, &S2_0, close_vin, NULL);
   S2.add_transition(&S2_0, &S2_0, open_vout, NULL);
@@ -110,6 +116,7 @@ void setup() {
   S2.add_transition(&S2_1, &S2_1, close_vout, NULL);
   S2.add_transition(&S2_1, &S2_0, level_H1, NULL);
 
+  Serial.println("S3");
   S3.add_transition(&S3_0, &S3_0, init, NULL); 
   S3.add_transition(&S3_0, &S3_0, close_vin, NULL);
   S3.add_transition(&S3_0, &S3_0, open_vin, NULL);

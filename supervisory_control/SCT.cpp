@@ -25,12 +25,12 @@ State::State(void (*on_enter)(), void (*on_exit)(), char num_state):
 }
 
 
-Automaton::Automaton(State* initial_state)
+Automaton::Automaton(State* initial_state, int num_events)
 : m_current_state(initial_state),
   m_transitions(NULL),
-  m_num_transitions(0),
-  m_feasibility(NULL)
+  m_num_transitions(0)
 {
+  m_num_events = num_events;
 }
 
 
@@ -40,7 +40,6 @@ Automaton::~Automaton()
   free(m_timed_transitions);
   m_transitions = NULL;
   m_timed_transitions = NULL;
-  m_feasibility = NULL;
 }
 
 
@@ -56,12 +55,6 @@ void Automaton::add_transition(State* state_from, State* state_to, int event,
                                                        * sizeof(Transition));
   m_transitions[m_num_transitions] = transition;
   m_num_transitions++;
-  
-  //TODO: RESOLVER ESSE PROBLEMA. usar o evento como índice não dá certo
-  if(m_feasibility[event] == NULL){
-	  m_feasibility = (int*) realloc(m_feasibility, (m_num_transitions + 1)* sizeof(int));
-    m_feasibility[event] = 0;
-  }
   
   Serial.print("Fs: ");
   Serial.print(event);
@@ -174,8 +167,8 @@ State* Automaton::Transition::make_transition()
 }
 
 
-Supervisor::Supervisor(State* initial_state):
-	Automaton(initial_state)
+Supervisor::Supervisor(State* initial_state, int num_events):
+	Automaton(initial_state, num_events)
 {
 	disablements = 0;
 }
@@ -229,11 +222,11 @@ void DES::trigger_if_possible(int event)
 	  Serial.print(m_plants[i]->is_defined(event)+ String(" "));
     Serial.println();
   	if (m_plants[i]->is_defined(event)){
-      Serial.print("Is feasible: ");
+      Serial.print(" Is feasible: ");
 	    Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
       Serial.println();
   		if(!m_plants[i]->is_feasible(event)){
-        Serial.println("Event not possible.");
+        Serial.println("  Event not possible.");
   			return;
   		}
   	}

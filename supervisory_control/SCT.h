@@ -24,6 +24,8 @@ Created in 22/06/2021
   #include <WProgram.h>
 #endif
 
+#include "Arduino_AVRSTL.h"
+#include "map"
 
 struct State
 {
@@ -38,7 +40,7 @@ struct State
 class Automaton
 {
 public:
-  Automaton(State* initial_state);
+  Automaton(State* initial_state, int num_events);
   ~Automaton();
 
   void add_transition(State* state_from, State* state_to, int event,
@@ -75,8 +77,9 @@ private:
 private:
   State* m_current_state;
   Transition* m_transitions;
-  int* m_feasibility;
+  std::map<int,int>  m_feasibility;
   int m_num_transitions;
+  int m_num_events;
 
   TimedTransition* m_timed_transitions;
   int m_num_timed_transitions;
@@ -85,7 +88,7 @@ private:
 class Supervisor : public Automaton{
 
 public:
-	Supervisor(State* initial_state);
+	Supervisor(State* initial_state, int num_events);
 	void disable(int event);
 	void enable(int event);
 	bool is_disabled(int event);
