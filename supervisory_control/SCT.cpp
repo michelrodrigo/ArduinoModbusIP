@@ -16,7 +16,7 @@ Created in 22/06/2021
 
 #include "SCT.h"
 
-
+// Struct constructor
 State::State(void (*on_enter)(), void (*on_exit)(), char num_state): 
 	on_enter(on_enter),
 	on_exit(on_exit),
@@ -24,25 +24,23 @@ State::State(void (*on_enter)(), void (*on_exit)(), char num_state):
 {
 }
 
-
-Automaton::Automaton(State* initial_state, int num_events)
+//Automaton constructor
+Automaton::Automaton(State* initial_state)
 : m_current_state(initial_state),
   m_transitions(NULL),
   m_num_transitions(0)
 {
-  m_num_events = num_events;
 }
 
-
+//Automaton destructor
 Automaton::~Automaton()
 {
   free(m_transitions);
-  free(m_timed_transitions);
   m_transitions = NULL;
-  m_timed_transitions = NULL;
+ 
 }
 
-
+//Create a new transition in the automaton
 void Automaton::add_transition(State* state_from, State* state_to, int event,
                          void (*on_transition)())
 {
@@ -64,26 +62,6 @@ void Automaton::add_transition(State* state_from, State* state_to, int event,
 
 }
 
-
-void Automaton::add_timed_transition(State* state_from, State* state_to,
-                               unsigned long interval, void (*on_transition)())
-{
-  if (state_from == NULL || state_to == NULL)
-    return;
-
-  Transition transition = Automaton::create_transition(state_from, state_to, 0,
-                                                 on_transition);
-
-  TimedTransition timed_transition;
-  timed_transition.transition = transition;
-  timed_transition.start = 0;
-  timed_transition.interval = interval;
-
-  m_timed_transitions = (TimedTransition*) realloc(
-      m_timed_transitions, (m_num_timed_transitions + 1) * sizeof(TimedTransition));
-  m_timed_transitions[m_num_timed_transitions] = timed_transition;
-  m_num_timed_transitions++;
-}
 
 
 Automaton::Transition Automaton::create_transition(State* state_from, State* state_to,
@@ -126,30 +104,6 @@ bool Automaton::is_feasible(int event){
 }
 
 
-void Automaton::check_timer()
-{
-  for (int i = 0; i < m_num_timed_transitions; ++i)
-  {
-    TimedTransition* transition = &m_timed_transitions[i];
-    if (transition->transition.state_from == m_current_state)
-    {
-      if (transition->start == 0)
-      {
-        transition->start = millis();
-      }
-      else
-      {
-        unsigned long now = millis();
-        if (now - transition->start >= transition->interval)
-        {
-          m_current_state = transition->transition.make_transition();
-          transition->start = 0;
-        }
-      }
-    }
-  }
-}
-
 
 State* Automaton::Transition::make_transition()
 {
@@ -167,8 +121,8 @@ State* Automaton::Transition::make_transition()
 }
 
 
-Supervisor::Supervisor(State* initial_state, int num_events):
-	Automaton(initial_state, num_events)
+Supervisor::Supervisor(State* initial_state):
+	Automaton(initial_state)
 {
 	disablements = 0;
 }

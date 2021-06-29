@@ -60,14 +60,14 @@ State S3_1(&S3_1_action, NULL, 1);
 
 
 //Automata declaration
-Automaton VIN(&VIN_0, 2);
-Automaton VOUT(&VOUT_0, 2);
-Automaton TANK(&TANK_0, 4);
+Automaton VIN(&VIN_0);
+Automaton VOUT(&VOUT_0);
+Automaton TANK(&TANK_0);
 
 
-Supervisor S1(&S1_0, 6);
-Supervisor S2(&S2_0, 6);
-Supervisor S3(&S3_0, 6);
+Supervisor S1(&S1_0);
+Supervisor S2(&S2_0);
+Supervisor S3(&S3_0);
 
 DES System;
 int incomingByte = 0; // for incoming serial data
