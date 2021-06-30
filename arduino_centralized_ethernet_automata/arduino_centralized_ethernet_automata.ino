@@ -310,11 +310,11 @@ void loop () {
           Output = random(10, 255);
           analogWrite(outputPin, Output);  
           state_process = 1;
-          valve_in = true;      
+          System.trigger_if_possible(open_vin);   
        }
        if(state_process == 1 && stateLevel == 1){      
           state_process = 2;
-          valve_in = false;
+          System.trigger_if_possible(close_vin);
           mixer = true;
           
        }
@@ -327,13 +327,13 @@ void loop () {
        if(state_process == 3 && drain_out){
           state_process = 4;
           mixer = false;
-          valve_out = true;
+          System.trigger_if_possible(open_vout);
           Output = 0;
           pump = false;
        }
        if(state_process == 4 && stateLevel == 0 ){
           state_process = 0;
-          valve_out = false;
+          System.trigger_if_possible(close_vout);
           drain_out = false;
           cool = false;     
        }
@@ -394,10 +394,10 @@ void loop () {
 
    // Level
    if(level < 10){
-      stateLevel = 0;
+      System.trigger_if_possible(level_L1);
    }
    else if(level >= maxLevel){
-      stateLevel = 1;      
+      System.trigger_if_possible(level_H1);   
    }
 
 
@@ -410,19 +410,6 @@ void loop () {
       digitalWrite(led, LOW);
    }
 
-   if(valve_in){
-      digitalWrite(v_in, HIGH);
-   }
-   else{
-      digitalWrite(v_in, LOW);
-   }
-
-   if(valve_out){
-      digitalWrite(v_out, HIGH);
-   }
-   else{
-      digitalWrite(v_out, LOW);
-   }
 
    
 }
