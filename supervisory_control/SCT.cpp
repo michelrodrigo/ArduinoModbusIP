@@ -166,6 +166,9 @@ void DES::add_supervisor(Supervisor* sup)
 	m_num_sups++;													
 }
 
+/*An event can be triggered if it is feasible in all plants that share the event and 
+ * if it is not disabled by any supervisor. 
+ */
 void DES::trigger_if_possible(int event)
 {
 

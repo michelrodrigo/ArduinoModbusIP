@@ -16,14 +16,15 @@ Created in 22/06/2021
 
 #include "SCT.h"
 
-
-State::State(void (*on_enter)(), void (*on_exit)()): 
+// Struct constructor
+State::State(void (*on_enter)(), void (*on_exit)(), char num_state): 
 	on_enter(on_enter),
-	on_exit(on_exit)
+	on_exit(on_exit),
+	num_state(num_state)
 {
 }
 
-
+//Automaton constructor
 Automaton::Automaton(State* initial_state)
 : m_current_state(initial_state),
   m_transitions(NULL),
@@ -31,16 +32,15 @@ Automaton::Automaton(State* initial_state)
 {
 }
 
-
+//Automaton destructor
 Automaton::~Automaton()
 {
   free(m_transitions);
-  free(m_timed_transitions);
   m_transitions = NULL;
-  m_timed_transitions = NULL;
+ 
 }
 
-
+//Create a new transition in the automaton
 void Automaton::add_transition(State* state_from, State* state_to, int event,
                          void (*on_transition)())
 {
@@ -53,28 +53,15 @@ void Automaton::add_transition(State* state_from, State* state_to, int event,
                                                        * sizeof(Transition));
   m_transitions[m_num_transitions] = transition;
   m_num_transitions++;
+  
+  Serial.print("Fs: ");
+  Serial.print(event);
+  Serial.print(1<<state_from->num_state);
+  m_feasibility[event] |= (1<<state_from->num_state);
+  Serial.println(String(" ")+ m_feasibility[event]);
+
 }
 
-
-void Automaton::add_timed_transition(State* state_from, State* state_to,
-                               unsigned long interval, void (*on_transition)())
-{
-  if (state_from == NULL || state_to == NULL)
-    return;
-
-  Transition transition = Automaton::create_transition(state_from, state_to, 0,
-                                                 on_transition);
-
-  TimedTransition timed_transition;
-  timed_transition.transition = transition;
-  timed_transition.start = 0;
-  timed_transition.interval = interval;
-
-  m_timed_transitions = (TimedTransition*) realloc(
-      m_timed_transitions, (m_num_timed_transitions + 1) * sizeof(TimedTransition));
-  m_timed_transitions[m_num_timed_transitions] = timed_transition;
-  m_num_timed_transitions++;
-}
 
 
 Automaton::Transition Automaton::create_transition(State* state_from, State* state_to,
@@ -103,30 +90,19 @@ void Automaton::trigger(int event)
   }
 }
 
-
-void Automaton::check_timer()
-{
-  for (int i = 0; i < m_num_timed_transitions; ++i)
-  {
-    TimedTransition* transition = &m_timed_transitions[i];
-    if (transition->transition.state_from == m_current_state)
-    {
-      if (transition->start == 0)
-      {
-        transition->start = millis();
-      }
-      else
-      {
-        unsigned long now = millis();
-        if (now - transition->start >= transition->interval)
-        {
-          m_current_state = transition->transition.make_transition();
-          transition->start = 0;
-        }
-      }
-    }
-  }
+bool Automaton::is_defined(int event){
+	if (m_feasibility[event] > 0){
+		return true;
+	}
+	else{
+		return false;
+	}	
 }
+
+bool Automaton::is_feasible(int event){
+	return m_feasibility[event] & 1<<m_current_state->num_state;
+}
+
 
 
 State* Automaton::Transition::make_transition()
@@ -148,27 +124,97 @@ State* Automaton::Transition::make_transition()
 Supervisor::Supervisor(State* initial_state):
 	Automaton(initial_state)
 {
-	disablements = 0;
 }
 
 //the event is disabled when its corresponding bit is 1
 void Supervisor::disable(int event)
 {
-	this->disablements |= (1<<event);
+  disablements[event] = true;
 }
 
 void Supervisor::enable(int event)
 {
-	this->disablements &= ~(1<<event);
+  disablements[event] = false;
 }
 
 bool Supervisor::is_disabled(int event)
 {
-	return this->disablements & (1<<event);
+ return disablements[event];
 }
 
-SO::SO(State* initial_state):
-	Automaton(initial_state)
-{
-//	if 
+DES::DES():
+	m_plants(NULL),
+	m_supervisors(NULL)
+{	
+	m_num_plants = 0;
+	m_num_sups = 0;
 }
+
+void DES::add_plant(Automaton* plant)
+{
+	m_plants = (Automaton**) realloc(m_plants, (m_num_plants + 1)
+                                                       * sizeof(Automaton*));
+	m_plants[m_num_plants] = plant;												   
+	m_num_plants++;													
+}
+
+void DES::add_supervisor(Supervisor* sup)
+{
+	m_supervisors = (Supervisor**) realloc(m_supervisors, (m_num_sups + 1)
+                                                       * sizeof(Supervisor*));
+	m_supervisors[m_num_sups] = sup;												   
+	m_num_sups++;													
+}
+
+/*An event can be triggered if it is feasible in all plants that share the event and 
+ * if it is not disabled by any supervisor. 
+ */
+void DES::trigger_if_possible(int event)
+{
+
+  for (int i = 0; i < m_num_plants; ++i)
+  {
+    Serial.print("Is defined: ");
+	  Serial.print(m_plants[i]->is_defined(event)+ String(" "));
+    Serial.println();
+  	if (m_plants[i]->is_defined(event)){
+      Serial.print(" Is feasible: ");
+	    Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
+      Serial.println();
+  		if(!m_plants[i]->is_feasible(event)){
+        Serial.println("  Event not possible.");
+  			return;
+  		}
+  	}
+  }
+  
+  for (int i = 0; i < m_num_sups; ++i)
+  {
+	  Serial.print("Disabled: ");
+    Serial.println(m_supervisors[i]->is_disabled(event));
+  	if (m_supervisors[i]->is_disabled(event)){
+  		Serial.println("Event disabled.");
+      return;
+  	}
+  }
+  
+  for (int i = 0; i < m_num_plants; ++i)
+  {
+	  m_plants[i]->trigger(event);
+  }
+
+  for (int i = 0; i < m_num_sups; ++i)
+  {
+    m_supervisors[i]->trigger(event);
+  }
+  
+}
+
+void DES::trigger_supervisors(int event)
+{
+  for (int i = 0; i < m_num_sups; ++i)
+  {
+    m_supervisors[i]->trigger(event);
+  }
+}
+ 
