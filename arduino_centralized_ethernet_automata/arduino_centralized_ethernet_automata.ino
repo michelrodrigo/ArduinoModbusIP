@@ -393,11 +393,13 @@ void loop () {
    }
 
    // Level
-   if(level < 10){
+   if(level < 10 && stateLevel == 1){
       System.trigger_if_possible(level_L1);
+       stateLevel = 0;
    }
-   else if(level >= maxLevel){
+   else if(level >= maxLevel && stateLevel == 0){
       System.trigger_if_possible(level_H1);   
+      stateLevel = 1; 
    }
 
 

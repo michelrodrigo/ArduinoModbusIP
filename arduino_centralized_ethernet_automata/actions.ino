@@ -1,26 +1,30 @@
 void VIN_0_action(){
    Serial.println("VIN estado 0");
    digitalWrite(v_in, LOW);
+   valve_in = false;
 }
 
 void VIN_1_action(){
     Serial.println("VIN estado 1");
     digitalWrite(v_in, HIGH);
+    valve_in = true;
 }
 
 void VOUT_0_action(){
     Serial.println("VOUT estado 0");
     digitalWrite(v_out, LOW);
+    valve_out = false;
 }
 
 void VOUT_1_action(){
   Serial.println("VOUT estado 1");
   digitalWrite(v_out, HIGH);
+  valve_out = true;
 }
 
 void TANK_0_action(){
   Serial.println("esvaziou");
-  stateLevel = 0;
+ 
 }
 
 void TANK_1_action(){
@@ -29,7 +33,7 @@ void TANK_1_action(){
 
 void TANK_2_action(){
   Serial.println("encheu");
-  stateLevel = 1; 
+  
 }
 
 void TANK_3_action(){
