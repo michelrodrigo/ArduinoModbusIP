@@ -124,23 +124,22 @@ State* Automaton::Transition::make_transition()
 Supervisor::Supervisor(State* initial_state):
 	Automaton(initial_state)
 {
-	disablements = 0;
 }
 
 //the event is disabled when its corresponding bit is 1
 void Supervisor::disable(int event)
 {
-	this->disablements |= (1<<event);
+  disablements[event] = true;
 }
 
 void Supervisor::enable(int event)
 {
-	this->disablements &= ~(1<<event);
+  disablements[event] = false;
 }
 
 bool Supervisor::is_disabled(int event)
 {
-	return this->disablements & (1<<event);
+ return disablements[event];
 }
 
 DES::DES():

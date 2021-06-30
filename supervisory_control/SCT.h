@@ -56,7 +56,7 @@ public:
 
   void add_transition(State* state_from, State* state_to, int event,
                       void (*on_transition)());
-  void trigger(int event);          //triggers an event          
+  void trigger(int event);          //triggers an event           
   bool is_defined(int event);       //returns true if the given event is defined at the current state;
                                     //returns false otherwise.
   bool is_feasible(int event);      //returns true if the event can be triggered, considering the
@@ -106,7 +106,7 @@ public:
 	
 
 private:
-	int disablements;                   //stores the disablement information.
+	std::map<int,bool> disablements;                   //stores the disablement information.
 };
 
 /* DES 
