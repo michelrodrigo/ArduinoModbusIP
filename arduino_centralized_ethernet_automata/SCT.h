@@ -63,7 +63,8 @@ public:
                                     //automata in the system that may share the given event. A shared
                                     //event can only be triggered if it can be triggered in all automata
                                     //in which the event is defined; 
-                                    //return false otherwise.
+                                    //returns false otherwise.
+  int current_state();              //returns the state number of the current state
 
 private:
   struct Transition

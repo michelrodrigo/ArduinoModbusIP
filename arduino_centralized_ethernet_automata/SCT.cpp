@@ -103,6 +103,10 @@ bool Automaton::is_feasible(int event){
 	return m_feasibility[event] & 1<<m_current_state->num_state;
 }
 
+int Automaton::current_state(){
+  return m_current_state->num_state;
+}
+
 
 
 State* Automaton::Transition::make_transition()

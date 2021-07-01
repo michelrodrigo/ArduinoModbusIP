@@ -112,6 +112,11 @@ void update_level_levels();
 void read_level_levels();
 
 //state actions
+void PROCESS_0_action();
+void PROCESS_1_action();
+void PROCESS_2_action();
+void PROCESS_3_action();
+void PROCESS_4_action();
 void VIN_0_action();
 void VIN_1_action();
 void VOUT_0_action();
@@ -126,17 +131,34 @@ void S3_0_action();
 void S3_1_action();
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9};
-int uncontrollable_events[] = {2, 4};
-#define open_vin    controllable_events[0]
-#define close_vin   controllable_events[1]
-#define open_vout   controllable_events[2]
-#define close_vout  controllable_events[3]
-#define init        controllable_events[4]
-#define level_H1       uncontrollable_events[0]
-#define level_L1       uncontrollable_events[1]
+int controllable_events[] = {1, 3, 5, 7, 9, 11};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12};
+#define open_vin        controllable_events[0]
+#define close_vin       controllable_events[1]
+#define open_vout       controllable_events[2]
+#define close_vout      controllable_events[3]
+#define init            controllable_events[4]
+#define process_start   controllable_events[5]
+#define level_H1        uncontrollable_events[0]
+#define level_L1        uncontrollable_events[1]
+#define full            uncontrollable_events[2]
+#define heated          uncontrollable_events[3]
+#define cooled          uncontrollable_events[4]
+#define empty           uncontrollable_events[5]
 
 // States ---------------------------------------------------------------
+
+// Process states
+State PROCESS_0(&PROCESS_0_action, NULL, 0);
+State PROCESS_1(&PROCESS_1_action, NULL, 1);
+State PROCESS_2(&PROCESS_2_action, NULL, 2);
+State PROCESS_3(&PROCESS_3_action, NULL, 3);
+State PROCESS_4(&PROCESS_4_action, NULL, 4);
+#define Idle        0
+#define Filling     1
+#define Heating     2
+#define Cooling     3
+#define Draining    4  
 
 // Input valve states
 State VIN_0(&VIN_0_action, NULL, 0);
@@ -166,6 +188,7 @@ State S3_1(&S3_1_action, NULL, 1);
 
 
 // Automata ------------------------------------------------------------
+Automaton PROCESS(&PROCESS_0);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
 Automaton TANK(&TANK_0);
@@ -220,6 +243,13 @@ void setup () {
   mb.addIsts(PUMP);
 
   //Transition declaration
+  Serial.println("PROCESS");
+  PROCESS.add_transition(&PROCESS_0, &PROCESS_1, process_start, NULL);
+  PROCESS.add_transition(&PROCESS_1, &PROCESS_2, full, NULL);
+  PROCESS.add_transition(&PROCESS_2, &PROCESS_3, heated, NULL);
+  PROCESS.add_transition(&PROCESS_3, &PROCESS_4, cooled, NULL);
+  PROCESS.add_transition(&PROCESS_4, &PROCESS_0, empty, NULL);
+  
   Serial.println("VIN");
   VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
   VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);  
@@ -269,6 +299,7 @@ void setup () {
   S3.add_transition(&S3_1, &S3_1, close_vin, NULL);
   S3.add_transition(&S3_1, &S3_0, level_L1, NULL);
   
+  System.add_plant(&PROCESS);
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
   System.add_plant(&TANK);
@@ -303,39 +334,25 @@ void loop () {
    if (millis() > ts + 100) {
        ts = millis();
        update_io();
-       Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
+       //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
 
         // Process transitions
-       if(state_process == 0 && start_process == 1){
-          Output = random(10, 255);
-          analogWrite(outputPin, Output);  
-          state_process = 1;
-          System.trigger_if_possible(open_vin);   
+       if(PROCESS.current_state() == Idle && start_process == 1){
+          System.trigger_if_possible(process_start);
        }
-       if(state_process == 1 && stateLevel == 1){      
-          state_process = 2;
-          System.trigger_if_possible(close_vin);
-          mixer = true;
+       if(PROCESS.current_state() == Filling && stateLevel == 1){      
+          System.trigger_if_possible(full);
           
        }
-       if(state_process == 2 && cool){
-          state_process = 3;
-          aux = 0;
-          pump = true;
+       if(PROCESS.current_state() == Heating && cool){
+         System.trigger_if_possible(heated);
           
        }
-       if(state_process == 3 && drain_out){
-          state_process = 4;
-          mixer = false;
-          System.trigger_if_possible(open_vout);
-          Output = 0;
-          pump = false;
+       if(PROCESS.current_state() == Cooling && drain_out){
+          System.trigger_if_possible(cooled);
        }
-       if(state_process == 4 && stateLevel == 0 ){
-          state_process = 0;
-          System.trigger_if_possible(close_vout);
-          drain_out = false;
-          cool = false;     
+       if(PROCESS.current_state() == Draining && stateLevel == 0 ){
+          System.trigger_if_possible(empty);
        }
     
        //Process states
