@@ -59,6 +59,8 @@ bool cool = false;
 bool pump = false;
 
 
+
+
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
@@ -144,6 +146,10 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12};
 #define heated          uncontrollable_events[3]
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
+
+#define NUM_EVENTS 6
+
+int enabled_events[NUM_EVENTS];
 
 // States ---------------------------------------------------------------
 
@@ -253,6 +259,13 @@ void loop () {
        ts = millis();
        update_io();
        //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
+
+       System.enabledEvents(controllable_events, NUM_EVENTS, enabled_events);
+       Serial.print("Enabled events: ");
+       for(int i = 0; i < NUM_EVENTS; i++){
+          Serial.print(enabled_events[i] + " ");
+       }
+       Serial.println();
 
         // Process transitions
        if(PROCESS.current_state() == Idle && start_process == 1){

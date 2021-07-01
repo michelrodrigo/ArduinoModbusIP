@@ -127,6 +127,7 @@ public:
 	void trigger_if_possible(int event); //triggers given event if it is possible
                                        //considering all other automata and supervisors
   void trigger_supervisors(int event); //triggers the events in the supervisors
+  void DES::enabledEvents(int* controllable_events, int num_events, int* enabled_events);
 
 
 private:

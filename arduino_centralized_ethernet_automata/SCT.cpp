@@ -221,4 +221,20 @@ void DES::trigger_supervisors(int event)
     m_supervisors[i]->trigger(event);
   }
 }
+
+void DES::enabledEvents(int* controllable_events, int num_events, int* enabled_events){
+
+  for(int i = 0; i < num_events; i++){
+    enabled_events[i] = true;
+  }
+
+  for(int i = 0; i < num_events; i++){
+    for(int j = 0; j < m_num_sups; j++){
+       if(m_supervisors[j]->is_disabled(controllable_events[i])){
+         enabled_events[i] = false;
+         break;
+       }
+    }      
+  }
+}
  
