@@ -121,20 +121,31 @@ class DES
 {
 	
 public:
-  DES();
+  DES(int* controllable_events, int num_c_events, int* uncontrollable_events, int num_u_events);
 	void add_plant(Automaton* plant);
 	void add_supervisor(Supervisor* sup);
-	void trigger_if_possible(int event); //triggers given event if it is possible
+	bool trigger_if_possible(int event); //triggers given event if it is possible
                                        //considering all other automata and supervisors
+                                       //returns true if event was triggered, false otherwise
   void trigger_supervisors(int event); //triggers the events in the supervisors
-  void enabledEvents(int* controllable_events, int num_events, int* enabled_events);
+  
+
+  int* enabled_events;
 
 
 private:
+	void enabledEvents();
+	
 	Automaton** m_plants;                //vector of pointers to the plant automata
 	Supervisor** m_supervisors;          //vector of pointers to the supervisor automata
+  int* m_controllable_events;
+  int* m_uncontrollable_events;
+  int m_num_c_events;
+  int m_num_u_events;
 	int m_num_plants;
 	int m_num_sups;
+ 
+ 
 
 };
 

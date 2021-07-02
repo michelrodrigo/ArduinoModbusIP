@@ -146,12 +146,16 @@ bool Supervisor::is_disabled(int event)
  return disablements[event];
 }
 
-DES::DES():
+DES::DES(int* controllable_events, int num_c_events, int* uncontrollable_events, int num_u_events):
   m_plants(NULL),
   m_supervisors(NULL)
 { 
   m_num_plants = 0;
   m_num_sups = 0;
+  m_controllable_events = controllable_events;
+  m_uncontrollable_events = uncontrollable_events;
+  m_num_c_events = num_c_events;
+  m_num_u_events = num_u_events;
 }
 
 void DES::add_plant(Automaton* plant)
@@ -173,7 +177,7 @@ void DES::add_supervisor(Supervisor* sup)
 /*An event can be triggered if it is feasible in all plants that share the event and 
  * if it is not disabled by any supervisor. 
  */
-void DES::trigger_if_possible(int event)
+bool DES::trigger_if_possible(int event)
 {
 
   for (int i = 0; i < m_num_plants; ++i)
@@ -187,7 +191,7 @@ void DES::trigger_if_possible(int event)
       Serial.println();
       if(!m_plants[i]->is_feasible(event)){
         Serial.println("  Event not possible.");
-        return;
+        return false;
       }
     }
   }
@@ -198,7 +202,7 @@ void DES::trigger_if_possible(int event)
     Serial.println(m_supervisors[i]->is_disabled(event));
     if (m_supervisors[i]->is_disabled(event)){
       Serial.println("Event disabled.");
-      return;
+      return false;
     }
   }
   
@@ -212,6 +216,13 @@ void DES::trigger_if_possible(int event)
     m_supervisors[i]->trigger(event);
   }
   
+  this->enabledEvents();
+  Serial.print("Enabled events: ");
+   for(int i = 0; i < m_num_c_events; i++){
+      Serial.print(enabled_events[i] + String(" "));
+   }
+   Serial.println();
+  return true;
 }
 
 void DES::trigger_supervisors(int event)
@@ -222,32 +233,32 @@ void DES::trigger_supervisors(int event)
   }
 }
 
-void DES::enabledEvents(int* controllable_events, int num_events, int* enabled_events){
+void DES::enabledEvents(){
 
   bool not_defined = true;
   
-  for(int i = 0; i < num_events; i++){
+  for(int i = 0; i < m_num_c_events; i++){
     enabled_events[i] = 1;
   }
 
-  for(int i = 0; i < num_events; i++){
+  for(int i = 0; i < m_num_c_events; i++){
     not_defined = true;
     for(int j = 0; j < m_num_plants; j++){
-        if(m_plants[j]->is_defined(controllable_events[i])){
-      not_defined = false;
-      if(m_plants[j]->is_feasible(controllable_events[i])){
-        for(int k = 0; k < m_num_sups; k++){
-          if(m_supervisors[k]->is_disabled(controllable_events[i])){        
-            enabled_events[i] = 0;
-            break;
-          }
-        }        
-      }
-      else{            
-        enabled_events[i] = 0;
-        break;
-      }
-    }      
+        if(m_plants[j]->is_defined(m_controllable_events[i])){
+            not_defined = false;
+            if(m_plants[j]->is_feasible(m_controllable_events[i])){
+              for(int k = 0; k < m_num_sups; k++){
+                if(m_supervisors[k]->is_disabled(m_controllable_events[i])){        
+                  enabled_events[i] = 0;
+                  break;
+                }
+              }        
+            }
+            else{            
+              enabled_events[i] = 0;
+              break;
+            }
+          }      
     }
     if(not_defined){
       enabled_events[i] = 0;

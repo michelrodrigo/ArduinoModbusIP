@@ -147,9 +147,10 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12};
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
 
-#define NUM_EVENTS 6
+#define NUM_C_EVENTS 6
+#define NUM_U_EVENTS 6
 
-int enabled_events[NUM_EVENTS];
+//int enabled_events[NUM_EVENTS];
 
 // States ---------------------------------------------------------------
 
@@ -202,7 +203,7 @@ Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
 
 
-DES System;
+DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 
 void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
@@ -260,12 +261,8 @@ void loop () {
        update_io();
        //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
 
-       System.enabledEvents(controllable_events, NUM_EVENTS, enabled_events);
-       Serial.print("Enabled events: ");
-       for(int i = 0; i < NUM_EVENTS; i++){
-          Serial.print(enabled_events[i] + String(" "));
-       }
-       Serial.println();
+       
+       
 
         // Process transitions
        if(PROCESS.current_state() == Idle && start_process == 1){
