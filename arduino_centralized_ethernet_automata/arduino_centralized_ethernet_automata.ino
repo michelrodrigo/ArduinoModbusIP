@@ -239,7 +239,7 @@ void setup () {
 
   randomSeed(analogRead(A5));
 
-  delay(5000);
+  delay(2000);
 
 }
 
@@ -263,7 +263,7 @@ void loop () {
        System.enabledEvents(controllable_events, NUM_EVENTS, enabled_events);
        Serial.print("Enabled events: ");
        for(int i = 0; i < NUM_EVENTS; i++){
-          Serial.print(enabled_events[i] + " ");
+          Serial.print(enabled_events[i] + String(" "));
        }
        Serial.println();
 

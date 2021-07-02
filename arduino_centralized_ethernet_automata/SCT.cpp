@@ -18,9 +18,9 @@ Created in 22/06/2021
 
 // Struct constructor
 State::State(void (*on_enter)(), void (*on_exit)(), char num_state): 
-	on_enter(on_enter),
-	on_exit(on_exit),
-	num_state(num_state)
+  on_enter(on_enter),
+  on_exit(on_exit),
+  num_state(num_state)
 {
 }
 
@@ -91,16 +91,16 @@ void Automaton::trigger(int event)
 }
 
 bool Automaton::is_defined(int event){
-	if (m_feasibility[event] > 0){
-		return true;
-	}
-	else{
-		return false;
-	}	
+  if (m_feasibility[event] > 0){
+    return true;
+  }
+  else{
+    return false;
+  } 
 }
 
 bool Automaton::is_feasible(int event){
-	return m_feasibility[event] & 1<<m_current_state->num_state;
+  return m_feasibility[event] & 1<<m_current_state->num_state;
 }
 
 int Automaton::current_state(){
@@ -126,7 +126,7 @@ State* Automaton::Transition::make_transition()
 
 
 Supervisor::Supervisor(State* initial_state):
-	Automaton(initial_state)
+  Automaton(initial_state)
 {
 }
 
@@ -147,27 +147,27 @@ bool Supervisor::is_disabled(int event)
 }
 
 DES::DES():
-	m_plants(NULL),
-	m_supervisors(NULL)
-{	
-	m_num_plants = 0;
-	m_num_sups = 0;
+  m_plants(NULL),
+  m_supervisors(NULL)
+{ 
+  m_num_plants = 0;
+  m_num_sups = 0;
 }
 
 void DES::add_plant(Automaton* plant)
 {
-	m_plants = (Automaton**) realloc(m_plants, (m_num_plants + 1)
+  m_plants = (Automaton**) realloc(m_plants, (m_num_plants + 1)
                                                        * sizeof(Automaton*));
-	m_plants[m_num_plants] = plant;												   
-	m_num_plants++;													
+  m_plants[m_num_plants] = plant;                          
+  m_num_plants++;                         
 }
 
 void DES::add_supervisor(Supervisor* sup)
 {
-	m_supervisors = (Supervisor**) realloc(m_supervisors, (m_num_sups + 1)
+  m_supervisors = (Supervisor**) realloc(m_supervisors, (m_num_sups + 1)
                                                        * sizeof(Supervisor*));
-	m_supervisors[m_num_sups] = sup;												   
-	m_num_sups++;													
+  m_supervisors[m_num_sups] = sup;                           
+  m_num_sups++;                         
 }
 
 /*An event can be triggered if it is feasible in all plants that share the event and 
@@ -179,32 +179,32 @@ void DES::trigger_if_possible(int event)
   for (int i = 0; i < m_num_plants; ++i)
   {
     Serial.print("Is defined: ");
-	  Serial.print(m_plants[i]->is_defined(event)+ String(" "));
+    Serial.print(m_plants[i]->is_defined(event)+ String(" "));
     Serial.println();
-  	if (m_plants[i]->is_defined(event)){
+    if (m_plants[i]->is_defined(event)){
       Serial.print(" Is feasible: ");
-	    Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
+      Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
       Serial.println();
-  		if(!m_plants[i]->is_feasible(event)){
+      if(!m_plants[i]->is_feasible(event)){
         Serial.println("  Event not possible.");
-  			return;
-  		}
-  	}
+        return;
+      }
+    }
   }
   
   for (int i = 0; i < m_num_sups; ++i)
   {
-	  Serial.print("Disabled: ");
+    Serial.print("Disabled: ");
     Serial.println(m_supervisors[i]->is_disabled(event));
-  	if (m_supervisors[i]->is_disabled(event)){
-  		Serial.println("Event disabled.");
+    if (m_supervisors[i]->is_disabled(event)){
+      Serial.println("Event disabled.");
       return;
-  	}
+    }
   }
   
   for (int i = 0; i < m_num_plants; ++i)
   {
-	  m_plants[i]->trigger(event);
+    m_plants[i]->trigger(event);
   }
 
   for (int i = 0; i < m_num_sups; ++i)
@@ -224,17 +224,35 @@ void DES::trigger_supervisors(int event)
 
 void DES::enabledEvents(int* controllable_events, int num_events, int* enabled_events){
 
+  bool not_defined = true;
+  
   for(int i = 0; i < num_events; i++){
-    enabled_events[i] = true;
+    enabled_events[i] = 1;
   }
 
   for(int i = 0; i < num_events; i++){
-    for(int j = 0; j < m_num_sups; j++){
-       if(m_supervisors[j]->is_disabled(controllable_events[i])){
-         enabled_events[i] = false;
-         break;
-       }
+    not_defined = true;
+    for(int j = 0; j < m_num_plants; j++){
+        if(m_plants[j]->is_defined(controllable_events[i])){
+      not_defined = false;
+      if(m_plants[j]->is_feasible(controllable_events[i])){
+        for(int k = 0; k < m_num_sups; k++){
+          if(m_supervisors[k]->is_disabled(controllable_events[i])){        
+            enabled_events[i] = 0;
+            break;
+          }
+        }        
+      }
+      else{            
+        enabled_events[i] = 0;
+        break;
+      }
     }      
+    }
+    if(not_defined){
+      enabled_events[i] = 0;
+    }
   }
+
 }
  

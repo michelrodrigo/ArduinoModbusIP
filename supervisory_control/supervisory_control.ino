@@ -13,6 +13,8 @@ int uncontrollable_events[] = {2, 4};
 #define level_H1       uncontrollable_events[0]
 #define level_L1       uncontrollable_events[1]
 
+int enabled_events[5];
+
 
 //Each state can have an on enter function, that is called when the state become the current state. Here are the 
 //headers to those functions
@@ -187,6 +189,13 @@ void loop() {
       break;
   }
   incomingByte = 255;
+
+      System.enabledEvents(controllable_events, 5, enabled_events);
+       Serial.print("Enabled events: ");
+       for(int i = 0; i < 5; i++){
+          Serial.print(enabled_events[i] + String(" "));
+       }
+       Serial.println();
 }
 
 //retorna 1 se o evento estiver desabilitado por pelo menos um supervisor e 
