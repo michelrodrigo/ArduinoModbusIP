@@ -63,7 +63,8 @@ public:
                                     //automata in the system that may share the given event. A shared
                                     //event can only be triggered if it can be triggered in all automata
                                     //in which the event is defined; 
-                                    //return false otherwise.
+                                    //returns false otherwise.
+  int current_state();              //returns the state number of the current state
 
 private:
   struct Transition
@@ -98,15 +99,15 @@ private:
 class Supervisor : public Automaton{
 
 public:
-	Supervisor(State* initial_state);
-	void disable(int event);            //disables given event 
-	void enable(int event);             //enables given event
-	bool is_disabled(int event);        //returns true if given event is disabled at the currente 
+  Supervisor(State* initial_state);
+  void disable(int event);            //disables given event 
+  void enable(int event);             //enables given event
+  bool is_disabled(int event);        //returns true if given event is disabled at the currente 
                                       //state; return false othewise
-	
+  
 
 private:
-	std::map<int,bool> disablements;                   //stores the disablement information.
+  std::map<int,bool> disablements;                   //stores the disablement information.
 };
 
 /* DES 
@@ -118,21 +119,22 @@ private:
  */
 class DES
 {
-	
+  
 public:
   DES();
-	void add_plant(Automaton* plant);
-	void add_supervisor(Supervisor* sup);
-	void trigger_if_possible(int event); //triggers given event if it is possible
+  void add_plant(Automaton* plant);
+  void add_supervisor(Supervisor* sup);
+  void trigger_if_possible(int event); //triggers given event if it is possible
                                        //considering all other automata and supervisors
   void trigger_supervisors(int event); //triggers the events in the supervisors
+  void enabledEvents(int* controllable_events, int num_events, int* enabled_events);
 
 
 private:
-	Automaton** m_plants;                //vector of pointers to the plant automata
-	Supervisor** m_supervisors;          //vector of pointers to the supervisor automata
-	int m_num_plants;
-	int m_num_sups;
+  Automaton** m_plants;                //vector of pointers to the plant automata
+  Supervisor** m_supervisors;          //vector of pointers to the supervisor automata
+  int m_num_plants;
+  int m_num_sups;
 
 };
 
