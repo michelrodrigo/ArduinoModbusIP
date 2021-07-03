@@ -117,3 +117,29 @@ void S3_1_action(){
     Serial.println("S3 estado 1: ");
     //Serial.println(S1.verifica(a2));
 }
+
+void S4_0_action(){
+  Serial.println("S4 estado 0: ");
+  S4.disable(open_vin);
+}
+
+void S4_1_action(){
+  Serial.println("S4 estado 1: ");
+  S4.enable(open_vin);
+}
+
+void S4_2_action(){
+  Serial.println("S4 estado 2: ");
+}
+
+void S4_3_action(){
+  Serial.println("S4 estado 3: ");
+}
+
+void S4_4_action(){
+  Serial.println("S4 estado 4: ");
+}
+
+void S4_5_action(){
+  Serial.println("S4 estado 5: ");
+}

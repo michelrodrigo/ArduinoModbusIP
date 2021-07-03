@@ -194,6 +194,15 @@ State S2_1(&S2_1_action, NULL, 1);
 State S3_0(&S3_0_action, NULL, 0);
 State S3_1(&S3_1_action, NULL, 1);
 
+// Supervisor of specification E4 - states
+State S4_0(&S4_0_action, NULL, 0);
+State S4_1(&S4_1_action, NULL, 1);
+State S4_2(&S4_2_action, NULL, 2);
+State S4_3(&S4_3_action, NULL, 3);
+State S4_4(&S4_4_action, NULL, 4);
+State S4_5(&S4_5_action, NULL, 5);
+
+
 // Automata ------------------------------------------------------------
 Automaton PROCESS(&PROCESS_0);
 Automaton VIN(&VIN_0);
@@ -203,6 +212,8 @@ Automaton TANK(&TANK_0);
 Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
+Supervisor S4(&S4_0);
+
 
 
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
@@ -238,6 +249,7 @@ void setup () {
   S1.trigger(init); //executes initial event for the supervisor
   S2.trigger(init); //executes initial event for the supervisor
   S3.trigger(init); //executes initial event for the supervisor
+  S4.trigger(init);
   ts = millis();
 
   System.updateDES();
