@@ -150,6 +150,8 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define NUM_C_EVENTS 5
 #define NUM_U_EVENTS 7
 
+ int list[]={open_vin, close_vin, open_vout, close_vout};
+
 //int enabled_events[NUM_EVENTS];
 
 // States ---------------------------------------------------------------

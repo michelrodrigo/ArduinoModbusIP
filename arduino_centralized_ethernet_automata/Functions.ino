@@ -86,7 +86,7 @@ void build_automata(){
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
 
-  int list[]={open_vin, close_vin, open_vout, close_vout};
+ 
   System.setMode(3, list, 4);
 }
 

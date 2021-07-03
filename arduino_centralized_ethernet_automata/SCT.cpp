@@ -273,8 +273,15 @@ void DES::enabledEvents(){
 void DES::setMode(int mode, int* list, int list_size){
 
   m_mode = mode;
+  m_action_list = (int*) malloc (list_size * sizeof(int));
   m_action_list = list;
   m_list_size = list_size;
+
+   Serial.print("Action list: ");
+       for(int i = 0; i < m_list_size; i++){
+          Serial.print(m_action_list[i] + String(" "));
+       }
+       Serial.println();
 
   switch(m_mode){
     case(3):
@@ -294,20 +301,28 @@ void DES::updateDES(){
           Serial.print(enabled_events[i] + String(" "));
        }
        Serial.println();
-//      if(enabled_events[m_next_event] == 1){
-//        for (int i = 0; i < m_num_plants; ++i) {
-//          m_plants[i]->trigger(m_action_list[m_next_event]);
-//        }
-//      
-//        for (int i = 0; i < m_num_sups; ++i){
-//          m_supervisors[i]->trigger(m_action_list[m_next_event]);
-//        }
-//       
-//        m_next_event++;
-//        if(m_next_event >= m_list_size){
-//          m_next_event = 0;
-//        }
-//      }
+
+       Serial.print("Action list: ");
+       for(int i = 0; i < m_list_size; i++){
+          Serial.print(m_action_list[i] + String(" "));
+       }
+       Serial.println();
+       Serial.println(String("next event") + m_next_event);
+       Serial.println(String("Event: ")+ m_action_list[m_next_event] + String(" is ") +enabled_events[m_next_event]);
+      if(enabled_events[m_next_event] == 1){
+        for (int i = 0; i < m_num_plants; ++i) {
+          m_plants[i]->trigger(m_action_list[m_next_event]);
+        }
+      
+        for (int i = 0; i < m_num_sups; ++i){
+          m_supervisors[i]->trigger(m_action_list[m_next_event]);
+        }
+       
+        m_next_event++;
+        if(m_next_event >= m_list_size){
+          m_next_event = 0;
+        }
+      }
 
       break;
   }
