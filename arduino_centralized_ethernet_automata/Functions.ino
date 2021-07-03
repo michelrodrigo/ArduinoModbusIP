@@ -82,14 +82,12 @@ void build_automata(){
   S4.add_transition(&S4_0, &S4_0, init, NULL); 
   S4.add_transition(&S4_0, &S4_1, process_start, NULL); 
   S4.add_transition(&S4_1, &S4_0, open_vin, NULL); 
-  S4.add_transition(&S4_1, &S4_2, full, NULL);
-  S4.add_transition(&S4_2, &S4_0, open_vin, NULL);  
-  S4.add_transition(&S4_2, &S4_3, heated, NULL); 
-  S4.add_transition(&S4_3, &S4_0, open_vin, NULL); 
-  S4.add_transition(&S4_3, &S4_4, cooled, NULL); 
-  S4.add_transition(&S4_4, &S4_0, open_vin, NULL); 
-  S4.add_transition(&S4_5, &S4_5, empty, NULL); 
-  S4.add_transition(&S4_5, &S4_0, open_vin, NULL); 
+
+  Serial.println("S5");
+  S5.add_transition(&S5_0, &S5_0, init, NULL); 
+  S5.add_transition(&S5_0, &S5_1, cooled, NULL); 
+  S5.add_transition(&S5_1, &S5_0, open_vout, NULL); 
+  
   
   
   System.add_plant(&PROCESS);
@@ -100,6 +98,7 @@ void build_automata(){
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
   System.add_supervisor(&S4);
+  System.add_supervisor(&S5);
 
  
   System.setMode(3, list, 4);

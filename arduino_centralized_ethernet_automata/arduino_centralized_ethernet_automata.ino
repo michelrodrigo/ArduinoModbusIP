@@ -197,10 +197,10 @@ State S3_1(&S3_1_action, NULL, 1);
 // Supervisor of specification E4 - states
 State S4_0(&S4_0_action, NULL, 0);
 State S4_1(&S4_1_action, NULL, 1);
-State S4_2(&S4_2_action, NULL, 2);
-State S4_3(&S4_3_action, NULL, 3);
-State S4_4(&S4_4_action, NULL, 4);
-State S4_5(&S4_5_action, NULL, 5);
+
+// Supervisor of specification E5 - states
+State S5_0(&S5_0_action, NULL, 0);
+State S5_1(&S5_1_action, NULL, 1);
 
 
 // Automata ------------------------------------------------------------
@@ -213,6 +213,7 @@ Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
 Supervisor S4(&S4_0);
+Supervisor S5(&S5_0);
 
 
 
@@ -250,6 +251,7 @@ void setup () {
   S2.trigger(init); //executes initial event for the supervisor
   S3.trigger(init); //executes initial event for the supervisor
   S4.trigger(init);
+  S5.trigger(init);
   ts = millis();
 
   System.updateDES();

@@ -128,18 +128,12 @@ void S4_1_action(){
   S4.enable(open_vin);
 }
 
-void S4_2_action(){
-  Serial.println("S4 estado 2: ");
+void S5_0_action(){
+  Serial.println("S5 estado 0: ");
+  S5.disable(open_vout);
 }
 
-void S4_3_action(){
-  Serial.println("S4 estado 3: ");
-}
-
-void S4_4_action(){
-  Serial.println("S4 estado 4: ");
-}
-
-void S4_5_action(){
-  Serial.println("S4 estado 5: ");
+void S5_1_action(){
+  Serial.println("S5 estado 1: ");
+  S5.enable(open_vout);
 }
