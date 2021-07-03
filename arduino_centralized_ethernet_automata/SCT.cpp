@@ -156,6 +156,8 @@ DES::DES(int* controllable_events, int num_c_events, int* uncontrollable_events,
   m_uncontrollable_events = uncontrollable_events;
   m_num_c_events = num_c_events;
   m_num_u_events = num_u_events;
+
+  enabled_events = (int*) malloc (m_num_c_events * sizeof(int));
 }
 
 void DES::add_plant(Automaton* plant)
@@ -217,6 +219,7 @@ bool DES::trigger_if_possible(int event)
   }
   
   this->enabledEvents();
+  this->updateDES();
   Serial.print("Enabled events: ");
    for(int i = 0; i < m_num_c_events; i++){
       Serial.print(enabled_events[i] + String(" "));
@@ -236,25 +239,25 @@ void DES::trigger_supervisors(int event)
 void DES::enabledEvents(){
 
   bool not_defined = true;
-  
-  for(int i = 0; i < m_num_c_events; i++){
+  int i;
+  for(i = 0; i < m_num_c_events; i++){
     enabled_events[i] = 1;
   }
 
-  for(int i = 0; i < m_num_c_events; i++){
+  for(i = 0; i < m_num_c_events; i++){
     not_defined = true;
     for(int j = 0; j < m_num_plants; j++){
-        if(m_plants[j]->is_defined(m_controllable_events[i])){
+        if(m_plants[j]->is_defined(m_controllable_events[i])){            
             not_defined = false;
-            if(m_plants[j]->is_feasible(m_controllable_events[i])){
+            if(m_plants[j]->is_feasible(m_controllable_events[i])){  
               for(int k = 0; k < m_num_sups; k++){
-                if(m_supervisors[k]->is_disabled(m_controllable_events[i])){        
+                if(m_supervisors[k]->is_disabled(m_controllable_events[i])){
                   enabled_events[i] = 0;
                   break;
                 }
               }        
             }
-            else{            
+            else{   
               enabled_events[i] = 0;
               break;
             }
@@ -266,4 +269,49 @@ void DES::enabledEvents(){
   }
 
 }
- 
+
+void DES::setMode(int mode, int* list, int list_size){
+
+  m_mode = mode;
+  m_action_list = list;
+  m_list_size = list_size;
+
+  switch(m_mode){
+    case(3):
+      m_next_event = 0;
+  }
+}
+
+void DES::updateDES(){
+
+
+  this->enabledEvents();
+  switch(m_mode){
+
+    case(3)://sequence of events
+      Serial.print("Enabled events: ");
+       for(int i = 0; i < m_num_c_events; i++){
+          Serial.print(enabled_events[i] + String(" "));
+       }
+       Serial.println();
+//      if(enabled_events[m_next_event] == 1){
+//        for (int i = 0; i < m_num_plants; ++i) {
+//          m_plants[i]->trigger(m_action_list[m_next_event]);
+//        }
+//      
+//        for (int i = 0; i < m_num_sups; ++i){
+//          m_supervisors[i]->trigger(m_action_list[m_next_event]);
+//        }
+//       
+//        m_next_event++;
+//        if(m_next_event >= m_list_size){
+//          m_next_event = 0;
+//        }
+//      }
+
+      break;
+  }
+
+  this->enabledEvents();
+  
+}

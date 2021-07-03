@@ -128,8 +128,12 @@ public:
                                        //considering all other automata and supervisors
                                        //returns true if event was triggered, false otherwise
   void trigger_supervisors(int event); //triggers the events in the supervisors
+  void setMode(int mode, int* list, int list_size);   //this functions sets the operation mode:
+                                       //1 - random: triggers enabled events randomly, list is null
+                                       //2 - priority: triggers enabled events according to priority list
+                                       //3 - sequence: triggers events in sequence, according to list
   
-
+  void updateDES();
   int* enabled_events;
 
 
@@ -144,6 +148,10 @@ private:
   int m_num_u_events;
 	int m_num_plants;
 	int m_num_sups;
+  int m_mode;
+  int* m_action_list;
+  int m_list_size;
+  int m_next_event;
  
  
 

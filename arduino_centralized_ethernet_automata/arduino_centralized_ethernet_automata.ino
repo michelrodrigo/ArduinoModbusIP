@@ -132,23 +132,23 @@ void S3_0_action();
 void S3_1_action();
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11};
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12};
+int controllable_events[] = {1, 3, 5, 7, 9};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
 #define open_vout       controllable_events[2]
 #define close_vout      controllable_events[3]
 #define init            controllable_events[4]
-#define process_start   controllable_events[5]
 #define level_H1        uncontrollable_events[0]
 #define level_L1        uncontrollable_events[1]
 #define full            uncontrollable_events[2]
 #define heated          uncontrollable_events[3]
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
+#define process_start   uncontrollable_events[6]
 
-#define NUM_C_EVENTS 6
-#define NUM_U_EVENTS 6
+#define NUM_C_EVENTS 5
+#define NUM_U_EVENTS 7
 
 //int enabled_events[NUM_EVENTS];
 
@@ -238,9 +238,11 @@ void setup () {
   S3.trigger(init); //executes initial event for the supervisor
   ts = millis();
 
+  System.updateDES();
+
   randomSeed(analogRead(A5));
 
-  delay(2000);
+  delay(5000);
 
 }
 

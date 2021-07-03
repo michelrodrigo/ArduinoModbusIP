@@ -1,6 +1,6 @@
 void PROCESS_0_action(){
    Serial.println("Process: Idle");
-   System.trigger_if_possible(close_vout);
+   //System.trigger_if_possible(close_vout);
    drain_out = false;
    cool = false; 
    state_process = 0;    
@@ -10,13 +10,13 @@ void PROCESS_1_action(){
    Serial.println("Process: Filling");
    Output = random(10, 255);
    analogWrite(outputPin, Output);  
-   System.trigger_if_possible(open_vin);   
+   //System.trigger_if_possible(open_vin);   
    state_process = 1;
 }
 
 void PROCESS_2_action(){
    Serial.println("Process: Heating");
-   System.trigger_if_possible(close_vin);
+   //System.trigger_if_possible(close_vin);
    mixer = true;
    state_process = 2;
 }
@@ -31,7 +31,7 @@ void PROCESS_3_action(){
 void PROCESS_4_action(){
    Serial.println("Process: Draining");
    mixer = false;
-   System.trigger_if_possible(open_vout);
+   //System.trigger_if_possible(open_vout);
    Output = 0;
    pump = false;
    state_process = 4;
