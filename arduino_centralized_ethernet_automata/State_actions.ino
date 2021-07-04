@@ -17,7 +17,7 @@ void PROCESS_1_action(){
 void PROCESS_2_action(){
    Serial.println("Process: Heating");
    //System.trigger_if_possible(close_vin);
-   mixer = true;
+   
    state_process = 2;
 }
 
@@ -30,7 +30,7 @@ void PROCESS_3_action(){
 
 void PROCESS_4_action(){
    Serial.println("Process: Draining");
-   mixer = false;
+   
    //System.trigger_if_possible(open_vout);
    Output = 0;
    pump = false;
@@ -78,6 +78,16 @@ void TANK_2_action(){
 
 void TANK_3_action(){
     Serial.println("esvaziando");
+}
+
+void MIXER_0_action(){
+    Serial.println("MIXER turned off");
+    mixer = false;
+}
+
+void MIXER_1_action(){
+  Serial.println("MIXER turned on");
+  mixer = true;
 }
 
 void S1_0_action(){
@@ -136,4 +146,24 @@ void S5_0_action(){
 void S5_1_action(){
   Serial.println("S5 estado 1: ");
   S5.enable(open_vout);
+}
+
+void S6_0_action(){
+  Serial.println("S6 estado 0: ");
+  S6.disable(turn_on_mixer);
+}
+
+void S6_1_action(){
+  Serial.println("S6 estado 1: ");
+  S6.enable(turn_on_mixer);
+}
+
+void S7_0_action(){
+  Serial.println("S7 estado 0: ");
+  S7.disable(turn_off_mixer);
+}
+
+void S7_1_action(){
+  Serial.println("S7 estado 1: ");
+  S7.enable(turn_off_mixer);
 }

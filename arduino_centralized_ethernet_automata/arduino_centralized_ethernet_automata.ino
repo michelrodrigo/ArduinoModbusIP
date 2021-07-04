@@ -186,6 +186,10 @@ State TANK_1(&TANK_1_action, NULL, 1);
 State TANK_2(&TANK_2_action, NULL, 2);
 State TANK_3(&TANK_3_action, NULL, 3);
 
+// Output valve states
+State MIXER_0(&MIXER_0_action, NULL, 0);
+State MIXER_1(&MIXER_1_action, NULL, 1);
+
 // Supervisor of specification E1 - states
 State S1_0(&S1_0_action, NULL, 0);
 State S1_1(&S1_1_action, NULL, 1);
@@ -206,18 +210,29 @@ State S4_1(&S4_1_action, NULL, 1);
 State S5_0(&S5_0_action, NULL, 0);
 State S5_1(&S5_1_action, NULL, 1);
 
+// Supervisor of specification E6 - states
+State S6_0(&S6_0_action, NULL, 0);
+State S6_1(&S6_1_action, NULL, 1);
+
+// Supervisor of specification E7 - states
+State S7_0(&S7_0_action, NULL, 0);
+State S7_1(&S7_1_action, NULL, 1);
+
 
 // Automata ------------------------------------------------------------
 Automaton PROCESS(&PROCESS_0);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
 Automaton TANK(&TANK_0);
+Automaton MIXER(&MIXER_0);
 
 Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
 Supervisor S4(&S4_0);
 Supervisor S5(&S5_0);
+Supervisor S6(&S6_0);
+Supervisor S7(&S7_0);
 
 
 
@@ -258,6 +273,8 @@ void setup () {
   S3.trigger(init); //executes initial event for the supervisor
   S4.trigger(init);
   S5.trigger(init);
+  S6.trigger(init);
+  S7.trigger(init);
   ts = millis();
 
   System.updateDES();

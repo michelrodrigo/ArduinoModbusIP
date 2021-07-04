@@ -43,6 +43,10 @@ void build_automata(){
   TANK.add_transition(&TANK_2, &TANK_3, open_vout, NULL);
   TANK.add_transition(&TANK_3, &TANK_0, level_L1, NULL);
 
+  Serial.println("MIXER");
+  MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
+  MIXER.add_transition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
+
   //each supervisor needs a init event that is executed upon initialization. This way
   //the on enter function of the initial state is executed and the enablements/disablements are set 
   Serial.println("S1");
@@ -87,6 +91,16 @@ void build_automata(){
   S5.add_transition(&S5_0, &S5_0, init, NULL); 
   S5.add_transition(&S5_0, &S5_1, cooled, NULL); 
   S5.add_transition(&S5_1, &S5_0, open_vout, NULL); 
+
+  Serial.println("S6");
+  S6.add_transition(&S6_0, &S6_0, init, NULL); 
+  S6.add_transition(&S6_0, &S6_1, full, NULL); 
+  S6.add_transition(&S6_1, &S6_0, turn_on_mixer, NULL); 
+
+  Serial.println("S7");
+  S7.add_transition(&S7_0, &S7_0, init, NULL); 
+  S7.add_transition(&S7_0, &S7_1, cooled, NULL); 
+  S7.add_transition(&S7_1, &S7_0, turn_off_mixer, NULL); 
   
   
   
@@ -94,12 +108,14 @@ void build_automata(){
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
   System.add_plant(&TANK);
+  System.add_plant(&MIXER);
   System.add_supervisor(&S1);
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
   System.add_supervisor(&S4);
   System.add_supervisor(&S5);
-
+  System.add_supervisor(&S6);
+  System.add_supervisor(&S7);
  
   
 }

@@ -314,7 +314,6 @@ void DES::updateDES(){
     case(RANDOM):
       for(int i = 0; i < m_num_c_events; i++){
         if(enabled_events[i] == 1){
-          //events_to_choose_from = (int*) realloc(events_to_choose_from, (aux + 1) * sizeof(int));
           events_to_choose_from[aux] = m_controllable_events[i];
           Serial.println(String("Enabled event: ") + i);
           aux++;
@@ -329,18 +328,7 @@ void DES::updateDES(){
       if(aux > 0){
         m_next_event = random(0, aux);
         Serial.println(String("Random event: ") + m_next_event);
-        
-          this->trigger_if_possible(events_to_choose_from[m_next_event]);
-//          for (int i = 0; i < m_num_plants; i++) {
-//            if(m_plants[i]->is_defined(events_to_choose_from[m_next_event]) && m_plants[i]->is_feasible(events_to_choose_from[m_next_event])){
-//              m_plants[i]->trigger(events_to_choose_from[m_next_event]);  
-//            }            
-//          }
-//        
-//          for (int i = 0; i < m_num_sups; i++){
-//            m_supervisors[i]->trigger(events_to_choose_from[m_next_event]);
-//          } 
-        
+        this->trigger_if_possible(events_to_choose_from[m_next_event]);       
       }     
       
       break;
