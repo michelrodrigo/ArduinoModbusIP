@@ -284,8 +284,16 @@ void DES::setMode(int mode, int* list, int list_size){
        Serial.println();
 
   switch(m_mode){
-    case(3):
+
+    case(RANDOM):
+      break;
+
+    case(PRIORITY):
+      break;
+    
+    case(LIST):
       m_next_event = 0;
+      break;
   }
 }
 
@@ -295,7 +303,33 @@ void DES::updateDES(){
   this->enabledEvents();
   switch(m_mode){
 
-    case(3)://sequence of events
+    case(RANDOM):
+      do{
+        m_next_event = random(0, m_list_size);
+      }while(enabled_events[m_next_event] == 0);
+
+      if(enabled_events[m_next_event] == 1){
+        for (int i = 0; i < m_num_plants; ++i) {
+          m_plants[i]->trigger(m_action_list[m_next_event]);
+        }
+      
+        for (int i = 0; i < m_num_sups; ++i){
+          m_supervisors[i]->trigger(m_action_list[m_next_event]);
+        }
+       
+        m_next_event++;
+        if(m_next_event >= m_list_size){
+          m_next_event = 0;
+        }
+      }
+      
+      break;
+
+    case(PRIORITY):
+      //TODO
+      break;
+    
+    case(LIST)://sequence of events
       Serial.print("Enabled events: ");
        for(int i = 0; i < m_num_c_events; i++){
           Serial.print(enabled_events[i] + String(" "));

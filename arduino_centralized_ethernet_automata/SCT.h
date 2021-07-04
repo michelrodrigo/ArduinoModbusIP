@@ -27,6 +27,11 @@ Created in 22/06/2021
 #include "Arduino_AVRSTL.h"
 #include "map"
 
+//Modes of operation for decision making
+#define RANDOM        1
+#define PRIORITY      2
+#define LIST          3
+
 /* State 
  * Each state has:
  * - on_enter function: it will be executed when the state is reached
