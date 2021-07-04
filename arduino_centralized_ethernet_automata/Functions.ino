@@ -101,7 +101,7 @@ void build_automata(){
   System.add_supervisor(&S5);
 
  
-  System.setMode(3, list, 4);
+  
 }
 
 void update_io(){

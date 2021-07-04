@@ -182,7 +182,7 @@ void DES::add_supervisor(Supervisor* sup)
 bool DES::trigger_if_possible(int event)
 {
 
-  for (int i = 0; i < m_num_plants; ++i)
+  for (int i = 0; i < m_num_plants; i++)
   {
     Serial.print("Is defined: ");
     Serial.print(m_plants[i]->is_defined(event)+ String(" "));
@@ -198,7 +198,7 @@ bool DES::trigger_if_possible(int event)
     }
   }
   
-  for (int i = 0; i < m_num_sups; ++i)
+  for (int i = 0; i < m_num_sups; i++)
   {
     Serial.print("Disabled: ");
     Serial.println(m_supervisors[i]->is_disabled(event));
@@ -208,12 +208,12 @@ bool DES::trigger_if_possible(int event)
     }
   }
   
-  for (int i = 0; i < m_num_plants; ++i)
+  for (int i = 0; i < m_num_plants; i++)
   {
     m_plants[i]->trigger(event);
   }
 
-  for (int i = 0; i < m_num_sups; ++i)
+  for (int i = 0; i < m_num_sups; i++)
   {
     m_supervisors[i]->trigger(event);
   }
@@ -230,7 +230,7 @@ bool DES::trigger_if_possible(int event)
 
 void DES::trigger_supervisors(int event)
 {
-  for (int i = 0; i < m_num_sups; ++i)
+  for (int i = 0; i < m_num_sups; i++)
   {
     m_supervisors[i]->trigger(event);
   }
@@ -299,29 +299,49 @@ void DES::setMode(int mode, int* list, int list_size){
 
 void DES::updateDES(){
 
+  int aux = 0;
+  int events_to_choose_from[m_list_size];
 
   this->enabledEvents();
+
+  Serial.print("Enabled events from update: ");
+ for(int i = 0; i < m_num_c_events; i++){
+    Serial.print(enabled_events[i] + String(" "));
+ }
+ Serial.println();
   switch(m_mode){
 
     case(RANDOM):
-      do{
-        m_next_event = random(0, m_list_size);
-      }while(enabled_events[m_next_event] == 0);
-
-      if(enabled_events[m_next_event] == 1){
-        for (int i = 0; i < m_num_plants; ++i) {
-          m_plants[i]->trigger(m_action_list[m_next_event]);
-        }
-      
-        for (int i = 0; i < m_num_sups; ++i){
-          m_supervisors[i]->trigger(m_action_list[m_next_event]);
-        }
-       
-        m_next_event++;
-        if(m_next_event >= m_list_size){
-          m_next_event = 0;
+      for(int i = 0; i < m_num_c_events; i++){
+        if(enabled_events[i] == 1){
+          //events_to_choose_from = (int*) realloc(events_to_choose_from, (aux + 1) * sizeof(int));
+          events_to_choose_from[aux] = m_controllable_events[i];
+          Serial.println(String("Enabled event: ") + i);
+          aux++;
         }
       }
+
+      Serial.print("Events to choose from: ");
+       for(int i = 0; i < aux; i++){
+          Serial.print(events_to_choose_from[i] + String(" "));
+       }
+       Serial.println();
+      if(aux > 0){
+        m_next_event = random(0, aux);
+        Serial.println(String("Random event: ") + m_next_event);
+        
+          this->trigger_if_possible(events_to_choose_from[m_next_event]);
+//          for (int i = 0; i < m_num_plants; i++) {
+//            if(m_plants[i]->is_defined(events_to_choose_from[m_next_event]) && m_plants[i]->is_feasible(events_to_choose_from[m_next_event])){
+//              m_plants[i]->trigger(events_to_choose_from[m_next_event]);  
+//            }            
+//          }
+//        
+//          for (int i = 0; i < m_num_sups; i++){
+//            m_supervisors[i]->trigger(events_to_choose_from[m_next_event]);
+//          } 
+        
+      }     
       
       break;
 
@@ -330,11 +350,7 @@ void DES::updateDES(){
       break;
     
     case(LIST)://sequence of events
-      Serial.print("Enabled events: ");
-       for(int i = 0; i < m_num_c_events; i++){
-          Serial.print(enabled_events[i] + String(" "));
-       }
-       Serial.println();
+      
 
        Serial.print("Action list: ");
        for(int i = 0; i < m_list_size; i++){
@@ -344,11 +360,11 @@ void DES::updateDES(){
        Serial.println(String("next event") + m_next_event);
        Serial.println(String("Event: ")+ m_action_list[m_next_event] + String(" is ") +enabled_events[m_next_event]);
       if(enabled_events[m_next_event] == 1){
-        for (int i = 0; i < m_num_plants; ++i) {
+        for (int i = 0; i < m_num_plants; i++) {
           m_plants[i]->trigger(m_action_list[m_next_event]);
         }
       
-        for (int i = 0; i < m_num_sups; ++i){
+        for (int i = 0; i < m_num_sups; i++){
           m_supervisors[i]->trigger(m_action_list[m_next_event]);
         }
        

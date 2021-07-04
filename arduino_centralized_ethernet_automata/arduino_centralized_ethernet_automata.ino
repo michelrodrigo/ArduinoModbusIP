@@ -132,13 +132,16 @@ void S3_0_action();
 void S3_1_action();
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9};
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15};
 int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
 #define open_vout       controllable_events[2]
 #define close_vout      controllable_events[3]
 #define init            controllable_events[4]
+#define turn_on_mixer   controllable_events[5]
+#define turn_off_mixer  controllable_events[6]
+
 #define level_H1        uncontrollable_events[0]
 #define level_L1        uncontrollable_events[1]
 #define full            uncontrollable_events[2]
@@ -147,7 +150,8 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define empty           uncontrollable_events[5]
 #define process_start   uncontrollable_events[6]
 
-#define NUM_C_EVENTS 5
+
+#define NUM_C_EVENTS 7
 #define NUM_U_EVENTS 7
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
@@ -245,6 +249,8 @@ void setup () {
   add_modbus_registers();
 
   build_automata();
+  //System.setMode(3, list, 4);
+  System.setMode(RANDOM, NULL, NUM_C_EVENTS);
 
   Serial.println("Initializing...");
   S1.trigger(init); //executes initial event for the supervisor
