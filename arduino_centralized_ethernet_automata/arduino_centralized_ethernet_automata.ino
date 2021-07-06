@@ -90,7 +90,7 @@ const int STATE_LEVEL_IREG = 14;
 const int MIXER_STATUS = 15;
 const int TIMER_MIXER_HREG = 16;
 const int SETPOINT2_HREG = 17;
-const int PUMP = 18;
+const int PUMP_STATUS = 18;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -132,7 +132,7 @@ void S3_0_action();
 void S3_1_action();
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15};
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
 int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
@@ -141,6 +141,8 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define init            controllable_events[4]
 #define turn_on_mixer   controllable_events[5]
 #define turn_off_mixer  controllable_events[6]
+#define turn_on_pump    controllable_events[7]
+#define turn_off_pump   controllable_events[8]
 
 #define level_H1        uncontrollable_events[0]
 #define level_L1        uncontrollable_events[1]
@@ -151,7 +153,7 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define process_start   uncontrollable_events[6]
 
 
-#define NUM_C_EVENTS 7
+#define NUM_C_EVENTS 10
 #define NUM_U_EVENTS 7
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
@@ -186,9 +188,13 @@ State TANK_1(&TANK_1_action, NULL, 1);
 State TANK_2(&TANK_2_action, NULL, 2);
 State TANK_3(&TANK_3_action, NULL, 3);
 
-// Output valve states
+// Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
 State MIXER_1(&MIXER_1_action, NULL, 1);
+
+// Pump states
+State PUMP_0(&PUMP_0_action, NULL, 0);
+State PUMP_1(&PUMP_1_action, NULL, 1);
 
 // Supervisor of specification E1 - states
 State S1_0(&S1_0_action, NULL, 0);
@@ -213,10 +219,14 @@ State S5_1(&S5_1_action, NULL, 1);
 // Supervisor of specification E6 - states
 State S6_0(&S6_0_action, NULL, 0);
 State S6_1(&S6_1_action, NULL, 1);
+State S6_2(&S6_2_action, NULL, 2);
 
 // Supervisor of specification E7 - states
 State S7_0(&S7_0_action, NULL, 0);
 State S7_1(&S7_1_action, NULL, 1);
+State S7_2(&S7_2_action, NULL, 2);
+
+
 
 
 // Automata ------------------------------------------------------------
@@ -225,6 +235,7 @@ Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
 Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
+Automaton PUMP(&PUMP_0);
 
 Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
@@ -233,6 +244,8 @@ Supervisor S4(&S4_0);
 Supervisor S5(&S5_0);
 Supervisor S6(&S6_0);
 Supervisor S7(&S7_0);
+
+
 
 
 
@@ -275,6 +288,7 @@ void setup () {
   S5.trigger(init);
   S6.trigger(init);
   S7.trigger(init);
+
   ts = millis();
 
   System.updateDES();

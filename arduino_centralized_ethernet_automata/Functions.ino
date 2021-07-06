@@ -17,7 +17,7 @@ void add_modbus_registers(){
     mb.addIsts(MIXER_STATUS);
     mb.addHreg(TIMER_MIXER_HREG);
     mb.addHreg(SETPOINT2_HREG);
-    mb.addIsts(PUMP);
+    mb.addIsts(PUMP_STATUS);
 }
 
 void build_automata(){
@@ -46,6 +46,10 @@ void build_automata(){
   Serial.println("MIXER");
   MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
   MIXER.add_transition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
+  
+  Serial.println("PUMP");
+  PUMP.add_transition(&PUMP_0, &PUMP_1, turn_on_pump, NULL);
+  PUMP.add_transition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
 
   //each supervisor needs a init event that is executed upon initialization. This way
   //the on enter function of the initial state is executed and the enablements/disablements are set 
@@ -94,13 +98,23 @@ void build_automata(){
 
   Serial.println("S6");
   S6.add_transition(&S6_0, &S6_0, init, NULL); 
-  S6.add_transition(&S6_0, &S6_1, full, NULL); 
+  S6.add_transition(&S6_0, &S6_1, level_H1, NULL); 
+  S6.add_transition(&S6_0, &S6_1, cooled, NULL); 
+  S6.add_transition(&S6_1, &S6_0, cooled, NULL); 
   S6.add_transition(&S6_1, &S6_0, turn_on_mixer, NULL); 
+  S6.add_transition(&S6_1, &S6_0, turn_off_mixer, NULL); 
+  S6.add_transition(&S6_1, &S6_2, level_L1, NULL); 
+  S6.add_transition(&S6_2, &S6_0, level_H1, NULL); 
 
   Serial.println("S7");
   S7.add_transition(&S7_0, &S7_0, init, NULL); 
   S7.add_transition(&S7_0, &S7_1, cooled, NULL); 
-  S7.add_transition(&S7_1, &S7_0, turn_off_mixer, NULL); 
+  S7.add_transition(&S7_0, &S7_1, heated, NULL); 
+  S7.add_transition(&S7_1, &S7_0, cooled, NULL);
+  S7.add_transition(&S7_1, &S7_0, turn_on_pump, NULL);
+  S7.add_transition(&S7_1, &S7_0, turn_off_pump, NULL);
+  S7.add_transition(&S7_1, &S7_2, level_L1, NULL);
+  S7.add_transition(&S7_2, &S7_0, heated, NULL);
   
   
   
@@ -109,6 +123,7 @@ void build_automata(){
   System.add_plant(&VOUT);
   System.add_plant(&TANK);
   System.add_plant(&MIXER);
+  System.add_plant(&PUMP);
   System.add_supervisor(&S1);
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
@@ -116,7 +131,8 @@ void build_automata(){
   System.add_supervisor(&S5);
   System.add_supervisor(&S6);
   System.add_supervisor(&S7);
- 
+
+  
   
 }
 
@@ -233,7 +249,7 @@ void update_io(){
 
    mb.Ists(V_IN_STATUS, valve_in);
    mb.Ists(V_OUT_STATUS, valve_out);
-   mb.Ists(PUMP, pump);
+   mb.Ists(PUMP_STATUS, pump);
    mb.Ists(MIXER_STATUS, mixer);
   
    mb.Ireg(STATE_PROCESS_IREG, state_process);

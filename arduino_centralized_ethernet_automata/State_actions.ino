@@ -23,8 +23,7 @@ void PROCESS_2_action(){
 
 void PROCESS_3_action(){
    Serial.println("Process: Cooling");
-   aux = 0;
-   pump = true;
+   aux = 0;   
    state_process = 3;
 }
 
@@ -33,7 +32,6 @@ void PROCESS_4_action(){
    
    //System.trigger_if_possible(open_vout);
    Output = 0;
-   pump = false;
    state_process = 4;
 }
 
@@ -88,6 +86,16 @@ void MIXER_0_action(){
 void MIXER_1_action(){
   Serial.println("MIXER turned on");
   mixer = true;
+}
+
+void PUMP_0_action(){
+    Serial.println("PUMP turned off");
+    pump = false;
+}
+
+void PUMP_1_action(){
+  Serial.println("PUMP turned on");
+  pump = true;
 }
 
 void S1_0_action(){
@@ -151,19 +159,33 @@ void S5_1_action(){
 void S6_0_action(){
   Serial.println("S6 estado 0: ");
   S6.disable(turn_on_mixer);
+  S6.disable(turn_off_mixer);
 }
 
 void S6_1_action(){
   Serial.println("S6 estado 1: ");
   S6.enable(turn_on_mixer);
+  S6.enable(turn_off_mixer);
+  
+}
+void S6_2_action(){
+  Serial.println("S6 estado 2: ");
+  S6.disable(turn_off_mixer);
 }
 
 void S7_0_action(){
   Serial.println("S7 estado 0: ");
-  S7.disable(turn_off_mixer);
+  S7.disable(turn_on_pump);
+  S7.disable(turn_off_pump);
 }
 
 void S7_1_action(){
   Serial.println("S7 estado 1: ");
-  S7.enable(turn_off_mixer);
+  S7.enable(turn_on_pump);
+  S7.enable(turn_off_pump);
+}
+
+void S7_2_action(){
+  Serial.println("S7 estado 2: ");
+  S7.disable(turn_off_pump);
 }
