@@ -13,6 +13,8 @@ int uncontrollable_events[] = {2, 4};
 #define level_H1       uncontrollable_events[0]
 #define level_L1       uncontrollable_events[1]
 
+int enabled_events[5];
+
 
 //Each state can have an on enter function, that is called when the state become the current state. Here are the 
 //headers to those functions
@@ -60,14 +62,14 @@ State S3_1(&S3_1_action, NULL, 1);
 
 
 //Automata declaration
-Automaton VIN(&VIN_0, 2);
-Automaton VOUT(&VOUT_0, 2);
-Automaton TANK(&TANK_0, 4);
+Automaton VIN(&VIN_0);
+Automaton VOUT(&VOUT_0);
+Automaton TANK(&TANK_0);
 
 
-Supervisor S1(&S1_0, 6);
-Supervisor S2(&S2_0, 6);
-Supervisor S3(&S3_0, 6);
+Supervisor S1(&S1_0);
+Supervisor S2(&S2_0);
+Supervisor S3(&S3_0);
 
 DES System;
 int incomingByte = 0; // for incoming serial data
@@ -187,6 +189,13 @@ void loop() {
       break;
   }
   incomingByte = 255;
+
+      System.enabledEvents(controllable_events, 5, enabled_events);
+       Serial.print("Enabled events: ");
+       for(int i = 0; i < 5; i++){
+          Serial.print(enabled_events[i] + String(" "));
+       }
+       Serial.println();
 }
 
 //retorna 1 se o evento estiver desabilitado por pelo menos um supervisor e 

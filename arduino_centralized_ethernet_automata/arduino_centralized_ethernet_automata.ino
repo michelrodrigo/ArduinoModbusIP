@@ -59,6 +59,8 @@ bool cool = false;
 bool pump = false;
 
 
+
+
 // Pins -------------------------------------------------------------------
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A0;   // The pin the analog sensor is connected to
@@ -66,7 +68,6 @@ int led         = 6;
 int v_in        = 7; // valve in
 int v_out       = 8; // valve out
 int levelSensorPin = A1;
-
 
 
 //Modbus Registers Offsets (0-9999) -------------------------------------
@@ -89,8 +90,7 @@ const int STATE_LEVEL_IREG = 14;
 const int MIXER_STATUS = 15;
 const int TIMER_MIXER_HREG = 16;
 const int SETPOINT2_HREG = 17;
-const int PUMP = 18;
-
+const int PUMP_STATUS = 18;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -101,7 +101,6 @@ const int PUMP = 18;
 #define TIMER_MIXER_ADDRESS 20
 #define TEMP2_SETPOINT_ADDRESS 24
 
-
 // Function headers ------------------------------------------------------
 void update_io();
 void update_setpoint();
@@ -110,59 +109,147 @@ void update_temp_levels();
 void read_temp_levels();
 void update_level_levels();
 void read_level_levels();
+void add_modbus_registers();
+void build_automata();
 
 //state actions
+void PROCESS_0_action();
+void PROCESS_1_action();
+void PROCESS_2_action();
+void PROCESS_3_action();
+void PROCESS_4_action();
 void VIN_0_action();
 void VIN_1_action();
 void VOUT_0_action();
 void VOUT_0_action();
-void HI_LEVEL_0_action();
-void LO_LEVEL_0_action();
+void TANK_0_action();
+void TANK_1_action();
 void S1_0_action();
 void S1_1_action();
-void S1_2_action();
-void S1_3_action();
+void S2_0_action();
+void S2_1_action();
+void S3_0_action();
+void S3_1_action();
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9};
-int uncontrollable_events[] = {2, 4};
-#define open_vin    controllable_events[0]
-#define close_vin   controllable_events[1]
-#define open_vout   controllable_events[2]
-#define close_vout  controllable_events[3]
-#define init        controllable_events[4]
-#define full        uncontrollable_events[0]
-#define empty       uncontrollable_events[1]
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
+#define open_vin        controllable_events[0]
+#define close_vin       controllable_events[1]
+#define open_vout       controllable_events[2]
+#define close_vout      controllable_events[3]
+#define init            controllable_events[4]
+#define turn_on_mixer   controllable_events[5]
+#define turn_off_mixer  controllable_events[6]
+#define turn_on_pump    controllable_events[7]
+#define turn_off_pump   controllable_events[8]
+
+#define level_H1        uncontrollable_events[0]
+#define level_L1        uncontrollable_events[1]
+#define full            uncontrollable_events[2]
+#define heated          uncontrollable_events[3]
+#define cooled          uncontrollable_events[4]
+#define empty           uncontrollable_events[5]
+#define process_start   uncontrollable_events[6]
+
+
+#define NUM_C_EVENTS 10
+#define NUM_U_EVENTS 7
+
+ int list[]={open_vin, close_vin, open_vout, close_vout};
+
+//int enabled_events[NUM_EVENTS];
 
 // States ---------------------------------------------------------------
 
+// Process states
+State PROCESS_0(&PROCESS_0_action, NULL, 0);
+State PROCESS_1(&PROCESS_1_action, NULL, 1);
+State PROCESS_2(&PROCESS_2_action, NULL, 2);
+State PROCESS_3(&PROCESS_3_action, NULL, 3);
+State PROCESS_4(&PROCESS_4_action, NULL, 4);
+#define Idle        0
+#define Filling     1
+#define Heating     2
+#define Cooling     3
+#define Draining    4  
+
 // Input valve states
-State VIN_0(&VIN_0_action, NULL);
-State VIN_1(&VIN_1_action, NULL);
+State VIN_0(&VIN_0_action, NULL, 0);
+State VIN_1(&VIN_1_action, NULL, 1);
 
 // Output valve states
-State VOUT_0(&VOUT_0_action, NULL);
-State VOUT_1(&VOUT_1_action, NULL);
+State VOUT_0(&VOUT_0_action, NULL, 0);
+State VOUT_1(&VOUT_1_action, NULL, 1);
 
-// High level sensor state
-State HI_LEVEL_0(&HI_LEVEL_0_action, NULL);
+// tank state
+State TANK_0(&TANK_0_action, NULL, 0);
+State TANK_1(&TANK_1_action, NULL, 1);
+State TANK_2(&TANK_2_action, NULL, 2);
+State TANK_3(&TANK_3_action, NULL, 3);
 
-// Low level sensor state
-State LO_LEVEL_0(&LO_LEVEL_0_action, NULL);
+// Mixer states
+State MIXER_0(&MIXER_0_action, NULL, 0);
+State MIXER_1(&MIXER_1_action, NULL, 1);
+
+// Pump states
+State PUMP_0(&PUMP_0_action, NULL, 0);
+State PUMP_1(&PUMP_1_action, NULL, 1);
 
 // Supervisor of specification E1 - states
-State S1_0(&S1_0_action, NULL);
-State S1_1(&S1_1_action, NULL);
-State S1_2(&S1_2_action, NULL);
-State S1_3(&S1_3_action, NULL);
+State S1_0(&S1_0_action, NULL, 0);
+State S1_1(&S1_1_action, NULL, 1);
+
+// Supervisor of specification E2 - states
+State S2_0(&S2_0_action, NULL, 0);
+State S2_1(&S2_1_action, NULL, 1);
+
+// Supervisor of specification E3 - states
+State S3_0(&S3_0_action, NULL, 0);
+State S3_1(&S3_1_action, NULL, 1);
+
+// Supervisor of specification E4 - states
+State S4_0(&S4_0_action, NULL, 0);
+State S4_1(&S4_1_action, NULL, 1);
+
+// Supervisor of specification E5 - states
+State S5_0(&S5_0_action, NULL, 0);
+State S5_1(&S5_1_action, NULL, 1);
+
+// Supervisor of specification E6 - states
+State S6_0(&S6_0_action, NULL, 0);
+State S6_1(&S6_1_action, NULL, 1);
+State S6_2(&S6_2_action, NULL, 2);
+
+// Supervisor of specification E7 - states
+State S7_0(&S7_0_action, NULL, 0);
+State S7_1(&S7_1_action, NULL, 1);
+State S7_2(&S7_2_action, NULL, 2);
+
+
+
 
 // Automata ------------------------------------------------------------
+Automaton PROCESS(&PROCESS_0);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
-Automaton HI_LEVEL(&HI_LEVEL_0);
-Automaton LO_LEVEL(&LO_LEVEL_0);
+Automaton TANK(&TANK_0);
+Automaton MIXER(&MIXER_0);
+Automaton PUMP(&PUMP_0);
 
 Supervisor S1(&S1_0);
+Supervisor S2(&S2_0);
+Supervisor S3(&S3_0);
+Supervisor S4(&S4_0);
+Supervisor S5(&S5_0);
+Supervisor S6(&S6_0);
+Supervisor S7(&S7_0);
+
+
+
+
+
+DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 
 void setup () {
   Serial.begin(9600);   // Some methods require the Serial.begin() method to be called first
@@ -187,46 +274,24 @@ void setup () {
   mb.config(mac, ip);
   // Add LAMP1_COIL register - Use addCoil() for digital outputs
 
-  mb.addIreg(SENSOR_IREG);
-  mb.addHreg(SETPOINT_HREG);
-  mb.addIreg(SETPOINT_IREG);
-  mb.addIreg(ACTION_IREG);
-  mb.addIreg(TEMP_STATE_IREG);
-  mb.addHreg(TEMP_H1_HREG);
-  mb.addHreg(TEMP_H2_HREG);
-  mb.addHreg(TEMP_H3_HREG);
-  mb.addCoil(START_COIL);
-  mb.addIreg(STATE_PROCESS_IREG);
-  mb.addIsts(V_IN_STATUS);
-  mb.addIsts(V_OUT_STATUS);
-  mb.addIreg(LEVEL_IREG);
-  mb.addHreg(MAX_LEVEL_HREG);
-  mb.addIreg(STATE_LEVEL_IREG);
-  mb.addIsts(MIXER_STATUS);
-  mb.addHreg(TIMER_MIXER_HREG);
-  mb.addHreg(SETPOINT2_HREG);
-  mb.addIsts(PUMP);
+  add_modbus_registers();
 
-  //Transition declaration
-  VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
-  VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);  
-  
-  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
-  VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
-  
-  HI_LEVEL.add_transition(&HI_LEVEL_0, &HI_LEVEL_0, full, NULL);
-  
-  LO_LEVEL.add_transition(&LO_LEVEL_0, &LO_LEVEL_0, empty, NULL);
+  build_automata();
+  //System.setMode(3, list, 4);
+  System.setMode(RANDOM, NULL, NUM_C_EVENTS);
 
-  S1.add_transition(&S1_0, &S1_0, init, NULL); 
-  S1.add_transition(&S1_0, &S1_1, open_vin, NULL);
-  S1.add_transition(&S1_1, &S1_2, close_vin, NULL);
-  S1.add_transition(&S1_2, &S1_3, open_vout, NULL);
-  S1.add_transition(&S1_3, &S1_0, close_vout, NULL);
-
+  Serial.println("Initializing...");
   S1.trigger(init); //executes initial event for the supervisor
+  S2.trigger(init); //executes initial event for the supervisor
+  S3.trigger(init); //executes initial event for the supervisor
+  S4.trigger(init);
+  S5.trigger(init);
+  S6.trigger(init);
+  S7.trigger(init);
 
   ts = millis();
+
+  System.updateDES();
 
   randomSeed(analogRead(A5));
 
@@ -249,39 +314,28 @@ void loop () {
    if (millis() > ts + 100) {
        ts = millis();
        update_io();
-       Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
+       //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
+
+       
+       
 
         // Process transitions
-       if(state_process == 0 && start_process == 1){
-          Output = random(10, 255);
-          analogWrite(outputPin, Output);  
-          state_process = 1;
-          valve_in = true;      
+       if(PROCESS.current_state() == Idle && start_process == 1){
+          System.trigger_if_possible(process_start);
        }
-       if(state_process == 1 && stateLevel == 1){      
-          state_process = 2;
-          valve_in = false;
-          mixer = true;
+       if(PROCESS.current_state() == Filling && stateLevel == 1){      
+          System.trigger_if_possible(full);
           
        }
-       if(state_process == 2 && cool){
-          state_process = 3;
-          aux = 0;
-          pump = true;
+       if(PROCESS.current_state() == Heating && cool){
+         System.trigger_if_possible(heated);
           
        }
-       if(state_process == 3 && drain_out){
-          state_process = 4;
-          mixer = false;
-          valve_out = true;
-          Output = 0;
-          pump = false;
+       if(PROCESS.current_state() == Cooling && drain_out){
+          System.trigger_if_possible(cooled);
        }
-       if(state_process == 4 && stateLevel == 0 ){
-          state_process = 0;
-          valve_out = false;
-          drain_out = false;
-          cool = false;     
+       if(PROCESS.current_state() == Draining && stateLevel == 0 ){
+          System.trigger_if_possible(empty);
        }
     
        //Process states
@@ -339,11 +393,13 @@ void loop () {
    }
 
    // Level
-   if(level < 10){
-      stateLevel = 0;
+   if(level < 10 && stateLevel == 1){
+      System.trigger_if_possible(level_L1);
+       stateLevel = 0;
    }
-   else if(level >= maxLevel){
-      stateLevel = 1;      
+   else if(level >= maxLevel && stateLevel == 0){
+      System.trigger_if_possible(level_H1);   
+      stateLevel = 1; 
    }
 
 
@@ -356,252 +412,6 @@ void loop () {
       digitalWrite(led, LOW);
    }
 
-   if(valve_in){
-      digitalWrite(v_in, HIGH);
-   }
-   else{
-      digitalWrite(v_in, LOW);
-   }
-
-   if(valve_out){
-      digitalWrite(v_out, HIGH);
-   }
-   else{
-      digitalWrite(v_out, LOW);
-   }
 
    
-}
-
-void update_io(){
-
-   
-   newSetpoint = mb.Hreg(SETPOINT_HREG);
-   if(newSetpoint != 0){
-     if(newSetpoint > MAX_TEMP){
-        newSetpoint = MAX_TEMP;
-     }
-     else if(newSetpoint < MIN_TEMP){
-        newSetpoint = MIN_TEMP; 
-     }
-     if(newSetpoint != Setpoint){
-        Setpoint = newSetpoint;
-        update_setpoint();
-     }
-   }
-
-   newSetpoint2 = mb.Hreg(SETPOINT2_HREG);
-   if(newSetpoint2 != 0){
-     if(newSetpoint2 > MAX_TEMP){
-        newSetpoint2 = MAX_TEMP;
-     }
-     else if(newSetpoint2 < MIN_TEMP){
-        newSetpoint2 = MIN_TEMP; 
-     }
-     if(newSetpoint2 != Setpoint2){
-        Setpoint2 = newSetpoint2;
-        update_setpoint();
-     }
-   }
-
-   newTempH1 = mb.Hreg(TEMP_H1_HREG);
-   if(newTempH1 != 0){
-     if(newTempH1 > MAX_TEMP){
-        newTempH1 = MAX_TEMP;
-     }
-     else if(newTempH1 < MIN_TEMP){
-        newTempH1 = MIN_TEMP; 
-     }
-     if(newTempH1 != tempH1){
-        tempH1 = newTempH1;
-        Serial.println("Call from H1");
-        update_temp_levels();
-     }
-   }
-   
-   newTempH2 = mb.Hreg(TEMP_H2_HREG);
-   if(newTempH2 != 0){
-     if(newTempH2 > MAX_TEMP){
-        newTempH2 = MAX_TEMP;
-     }
-     else if(newTempH2 < MIN_TEMP){
-        newTempH2 = MIN_TEMP; 
-     }
-     if(newTempH2 != tempH2){
-        tempH2 = newTempH2;
-        Serial.println("Call from H2");
-        update_temp_levels();
-     }
-   }
-
-   newTempH3 = mb.Hreg(TEMP_H3_HREG);
-   if(newTempH3 != 0){
-     if(newTempH3 > MAX_TEMP){
-        newTempH3 = MAX_TEMP;
-     }
-     else if(newTempH3 < MIN_TEMP){
-        newTempH3 = MIN_TEMP; 
-     }
-     if(newTempH3 != tempH3){
-        tempH3 = newTempH3;
-        Serial.println("Call from H3");
-        update_temp_levels();
-     }
-   }
-
-   newMaxLevel = mb.Hreg(MAX_LEVEL_HREG);
-   if(newMaxLevel != 0){
-     if(newMaxLevel > MAX_LEVEL){
-        newMaxLevel = MAX_LEVEL;
-     }
-     else if(newMaxLevel < MIN_LEVEL){
-        newMaxLevel = MIN_LEVEL; 
-     }
-     if(newMaxLevel != maxLevel){
-        maxLevel = newMaxLevel;
-        Serial.println("Call from max level");
-        update_level_levels();
-     }
-   }
-
-   newTimerMixer = mb.Hreg(TIMER_MIXER_HREG);
-   if(newTimerMixer != 0){
-     if(newTimerMixer > MAX_TIMER){
-        newTimerMixer = MAX_TIMER;
-     }
-     else if(newTimerMixer < MIN_TIMER){
-        newTimerMixer = MIN_TIMER; 
-     }
-     if(newTimerMixer != timerMixer){
-        timerMixer = newTimerMixer;
-        Serial.println("Call from timer mixer");
-        update_level_levels();
-     }
-   }
-   
-
-   
-   
-   start_process = mb.Coil(START_COIL);
-
-   mb.Ists(V_IN_STATUS, valve_in);
-   mb.Ists(V_OUT_STATUS, valve_out);
-   mb.Ists(PUMP, pump);
-   mb.Ists(MIXER_STATUS, mixer);
-  
-   mb.Ireg(STATE_PROCESS_IREG, state_process);
-   mb.Ireg(TEMP_STATE_IREG, temp_state);
-   mb.Ireg(SETPOINT_IREG, Setpoint);
-   mb.Ireg(SENSOR_IREG, Input);
-   mb.Ireg(ACTION_IREG, Output); 
-   mb.Ireg(SENSOR_IREG, Input);
-   mb.Ireg(LEVEL_IREG, level);
-   mb.Ireg(STATE_LEVEL_IREG, stateLevel);
-}
-
-void update_setpoint(){
-
-  int aux = 0;
-  int value1 = Setpoint / 1000;
-  aux = Setpoint - value1 * 1000;
-  int value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  int value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TEMP_SETPOINT_ADDRESS, aux);
-  EEPROM.update(TEMP_SETPOINT_ADDRESS+1, value3);
-  EEPROM.update(TEMP_SETPOINT_ADDRESS+2, value2);
-  EEPROM.update(TEMP_SETPOINT_ADDRESS+3, value1); 
-
-  value1 = Setpoint2 / 1000;
-  aux = Setpoint2 - value1 * 1000;
-  value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TEMP2_SETPOINT_ADDRESS, aux);
-  EEPROM.update(TEMP2_SETPOINT_ADDRESS+1, value3);
-  EEPROM.update(TEMP2_SETPOINT_ADDRESS+2, value2);
-  EEPROM.update(TEMP2_SETPOINT_ADDRESS+3, value1);
-}
-
-void read_setpoint(){  
-  Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
-  Setpoint2 = EEPROM.read(TEMP2_SETPOINT_ADDRESS) + EEPROM.read(TEMP2_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+3)*1000; 
-}
-
-void update_temp_levels(){
-
-  Serial.println(String("Updated: ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
-  int aux = 0;
-  int value1 = tempH1 / 1000;
-  aux = tempH1 - value1 * 1000;
-  int value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  int value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TEMP_H1_ADDRESS, aux);
-  EEPROM.update(TEMP_H1_ADDRESS+1, value3);
-  EEPROM.update(TEMP_H1_ADDRESS+2, value2);
-  EEPROM.update(TEMP_H1_ADDRESS+3, value1); 
-
-  
-  value1 = tempH2 / 1000;
-  aux = tempH2 - value1 * 1000;
-  value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TEMP_H2_ADDRESS, aux);
-  EEPROM.update(TEMP_H2_ADDRESS+1, value3);
-  EEPROM.update(TEMP_H2_ADDRESS+2, value2);
-  EEPROM.update(TEMP_H2_ADDRESS+3, value1); 
-
-  
-  value1 = tempH3 / 1000;
-  aux = tempH3 - value1 * 1000;
-  value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TEMP_H3_ADDRESS, aux);
-  EEPROM.update(TEMP_H3_ADDRESS+1, value3);
-  EEPROM.update(TEMP_H3_ADDRESS+2, value2);
-  EEPROM.update(TEMP_H3_ADDRESS+3, value1);  
-}
-void read_temp_levels(){
-  tempH1 = EEPROM.read(TEMP_H1_ADDRESS) + EEPROM.read(TEMP_H1_ADDRESS+1)*10 + EEPROM.read(TEMP_H1_ADDRESS+2)*100 + EEPROM.read(TEMP_H1_ADDRESS+3)*1000; 
-  tempH2 = EEPROM.read(TEMP_H2_ADDRESS) + EEPROM.read(TEMP_H2_ADDRESS+1)*10 + EEPROM.read(TEMP_H2_ADDRESS+2)*100 + EEPROM.read(TEMP_H2_ADDRESS+3)*1000; 
-  tempH3 = EEPROM.read(TEMP_H3_ADDRESS) + EEPROM.read(TEMP_H3_ADDRESS+1)*10 + EEPROM.read(TEMP_H3_ADDRESS+2)*100 + EEPROM.read(TEMP_H3_ADDRESS+3)*1000;
-  Serial.println(String("Read: ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter 
-}
-void update_level_levels(){
-  int value1 = maxLevel / 1000;
-  int aux = maxLevel - value1 * 1000;
-  int value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  int value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(MAX_LEVEL_ADDRESS, aux);
-  EEPROM.update(MAX_LEVEL_ADDRESS+1, value3);
-  EEPROM.update(MAX_LEVEL_ADDRESS+2, value2);
-  EEPROM.update(MAX_LEVEL_ADDRESS+3, value1);  
-
-  value1 = timerMixer / 1000;
-  aux = timerMixer - value1 * 1000;
-  value2 =  aux / 100;
-  aux = aux - value2 * 100;
-  value3 = aux / 10;
-  aux = aux - value3 * 10;
-  EEPROM.update(TIMER_MIXER_ADDRESS, aux);
-  EEPROM.update(TIMER_MIXER_ADDRESS+1, value3);
-  EEPROM.update(TIMER_MIXER_ADDRESS+2, value2);
-  EEPROM.update(TIMER_MIXER_ADDRESS+3, value1);  
-  
-  
-}
-void read_level_levels(){
-  maxLevel = EEPROM.read(MAX_LEVEL_ADDRESS) + EEPROM.read(MAX_LEVEL_ADDRESS+1)*10 + EEPROM.read(MAX_LEVEL_ADDRESS+2)*100 + EEPROM.read(MAX_LEVEL_ADDRESS+3)*1000; 
-  timerMixer = EEPROM.read(TIMER_MIXER_ADDRESS) + EEPROM.read(TIMER_MIXER_ADDRESS+1)*10 + EEPROM.read(TIMER_MIXER_ADDRESS+2)*100 + EEPROM.read(TIMER_MIXER_ADDRESS+3)*1000; 
-  
 }
