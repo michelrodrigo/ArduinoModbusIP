@@ -99,15 +99,21 @@ void PUMP_1_action(){
 }
 
 void S1_0_action(){
-    S1.enable(open_vin);
-    S1.enable(open_vout);
+    S1.enable(start_process);
     Serial.println("S1 estado 0: ");
     
 }
 
 void S1_1_action(){
-    S1.disable(open_vin);
-    S1.disable(open_vout);
+    S1.disable(start_process);
+    
+    Serial.println("S1 estado 1: ");
+    //Serial.println(S1.verifica(a2));
+}
+
+void S1_2_action(){
+    S1.enable(start_process);
+    
     Serial.println("S1 estado 1: ");
     //Serial.println(S1.verifica(a2));
 }

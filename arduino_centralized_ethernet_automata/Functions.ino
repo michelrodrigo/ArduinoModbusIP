@@ -55,17 +55,12 @@ void build_automata(){
   //the on enter function of the initial state is executed and the enablements/disablements are set 
   Serial.println("S1");
   S1.add_transition(&S1_0, &S1_0, init, NULL); 
-  S1.add_transition(&S1_0, &S1_0, open_vin, NULL);
-  S1.add_transition(&S1_0, &S1_0, open_vout, NULL);
-  S1.add_transition(&S1_0, &S1_1, close_vin, NULL);
-  S1.add_transition(&S1_0, &S1_1, close_vin, NULL);
-  S1.add_transition(&S1_0, &S1_1, level_H1, NULL);
-  S1.add_transition(&S1_0, &S1_1, level_L1, NULL);
-  S1.add_transition(&S1_1, &S1_0, level_H1, NULL);
-  S1.add_transition(&S1_1, &S1_0, level_L1, NULL);
-  S1.add_transition(&S1_1, &S1_0, close_vin, NULL);
-  S1.add_transition(&S1_1, &S1_0, close_vout, NULL);
-
+  S1.add_transition(&S1_0, &S1_1, level_L1, NULL); 
+  S1.add_transition(&S1_1, &S1_0, close_vout, NULL); 
+  S1.add_transition(&S1_1, &S1_2, open_vin, NULL); 
+  S1.add_transition(&S1_2, &S1_0, close_vout, NULL); 
+  
+ 
   Serial.println("S2");
   S2.add_transition(&S2_0, &S2_0, init, NULL); 
   S2.add_transition(&S2_0, &S2_0, close_vin, NULL);

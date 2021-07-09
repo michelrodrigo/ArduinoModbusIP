@@ -112,24 +112,6 @@ void read_level_levels();
 void add_modbus_registers();
 void build_automata();
 
-//state actions
-void PROCESS_0_action();
-void PROCESS_1_action();
-void PROCESS_2_action();
-void PROCESS_3_action();
-void PROCESS_4_action();
-void VIN_0_action();
-void VIN_1_action();
-void VOUT_0_action();
-void VOUT_0_action();
-void TANK_0_action();
-void TANK_1_action();
-void S1_0_action();
-void S1_1_action();
-void S2_0_action();
-void S2_1_action();
-void S3_0_action();
-void S3_1_action();
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
@@ -199,6 +181,7 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Supervisor of specification E1 - states
 State S1_0(&S1_0_action, NULL, 0);
 State S1_1(&S1_1_action, NULL, 1);
+State S1_2(&S1_2_action, NULL, 2);
 
 // Supervisor of specification E2 - states
 State S2_0(&S2_0_action, NULL, 0);
