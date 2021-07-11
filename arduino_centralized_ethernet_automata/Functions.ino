@@ -24,10 +24,10 @@ void build_automata(){
   //Transition declaration
   Serial.println("PROCESS");
   PROCESS.add_transition(&PROCESS_0, &PROCESS_1, process_start, NULL);
-  PROCESS.add_transition(&PROCESS_1, &PROCESS_2, full, NULL);
+  PROCESS.add_transition(&PROCESS_1, &PROCESS_2, level_H1, NULL);
   PROCESS.add_transition(&PROCESS_2, &PROCESS_3, heated, NULL);
   PROCESS.add_transition(&PROCESS_3, &PROCESS_4, cooled, NULL);
-  PROCESS.add_transition(&PROCESS_4, &PROCESS_0, empty, NULL);
+  PROCESS.add_transition(&PROCESS_4, &PROCESS_0, level_L1, NULL);
   
   Serial.println("VIN");
   VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
@@ -50,6 +50,13 @@ void build_automata(){
   Serial.println("PUMP");
   PUMP.add_transition(&PUMP_0, &PUMP_1, turn_on_pump, NULL);
   PUMP.add_transition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
+
+  Serial.println("TEMP");
+  TEMP.add_transition(&TEMP_0, &TEMP_1, turn_on_tcontrol, NULL);
+  TEMP.add_transition(&TEMP_1, &TEMP_2, heated, NULL);
+  TEMP.add_transition(&TEMP_2, &TEMP_3, cooled, NULL);
+  TEMP.add_transition(&TEMP_3, &TEMP_0, turn_off_tcontrol, NULL);
+  
 
   //each supervisor needs a init event that is executed upon initialization. This way
   //the on enter function of the initial state is executed and the enablements/disablements are set 
@@ -110,7 +117,13 @@ void build_automata(){
   S7.add_transition(&S7_1, &S7_0, turn_off_pump, NULL);
   S7.add_transition(&S7_1, &S7_2, level_L1, NULL);
   S7.add_transition(&S7_2, &S7_0, heated, NULL);
-  
+
+  Serial.println("S8");
+  S8.add_transition(&S8_0, &S8_0, init, NULL); 
+  S8.add_transition(&S8_0, &S8_1, level_H1, NULL); 
+  S8.add_transition(&S8_0, &S8_1, turn_off_tcontrol, NULL); 
+  S8.add_transition(&S8_1, &S8_0, level_H1, NULL); 
+  S8.add_transition(&S8_1, &S8_0, turn_off_tcontrol, NULL); 
   
   
   System.add_plant(&PROCESS);
@@ -119,6 +132,7 @@ void build_automata(){
   System.add_plant(&TANK);
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
+  System.add_plant(&TEMP);
   System.add_supervisor(&S1);
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
@@ -126,7 +140,7 @@ void build_automata(){
   System.add_supervisor(&S5);
   System.add_supervisor(&S6);
   System.add_supervisor(&S7);
-
+  System.add_supervisor(&S8);
   
   
 }

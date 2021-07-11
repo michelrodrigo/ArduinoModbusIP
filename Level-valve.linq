@@ -20,13 +20,13 @@ Event turn_on_mixer = new Event("turn_on_mixer", Controllability.Controllable);
 Event turn_on_pump = new Event("turn_on_pump", Controllability.Controllable);
 Event turn_off_pump = new Event("turn_off_pump", Controllability.Controllable);
 Event turn_off_mixer = new Event("turn_off_mixer", Controllability.Controllable); 
+Event turn_on_tcontrol = new Event("turn_on_tcontrol", Controllability.Controllable); 
+Event turn_off_tcontrol = new Event("turn_off_tcontrol", Controllability.Controllable); 
 Event full = new Event("full", Controllability.Uncontrollable);
 Event heated = new Event("heated", Controllability.Uncontrollable);
 Event cooled = new Event("cooled", Controllability.Uncontrollable);
 Event empty = new Event("empty", Controllability.Uncontrollable);
 Event start = new Event("start", Controllability.Controllable);
-
-
 
 
 
@@ -78,6 +78,15 @@ var PUMP = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], turn_off_pump, s[0]),
 
 	}, s[0], "PUMP");
+
+var TEMP = new DeterministicFiniteAutomaton(new[]
+{
+	new Transition(s[0], turn_on_tcontrol, s[1]),
+	new Transition(s[1], heated, s[2]),
+	new Transition(s[2], cooled, s[3]),
+	new Transition(s[3], turn_off_tcontrol, s[0]),
+
+	}, s[0], "TEMP");
 
 var E1 = new DeterministicFiniteAutomaton(new[]
 {
@@ -147,6 +156,12 @@ var E7 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[2], level_L1, s[0]),
   }, s[0], "E7");
 
+var E8 = new DeterministicFiniteAutomaton(new[]
+{
+	new Transition(s[0], level_H1, s[1]),
+	new Transition(s[1], turn_on_tcontrol, s[0])
+  }, s[0], "E8");
+
 
 var G1 = DeterministicFiniteAutomaton.ParallelComposition(new[] {E6, E7 });
 
@@ -156,8 +171,8 @@ var G1 = DeterministicFiniteAutomaton.ParallelComposition(new[] {E6, E7 });
 
 //var teste = K1.IsControllable(G1);
 //pequenaFabrica(out var plants, out var specs);
-var Monolitico = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { VIN, VOUT, TANK, PROCESS, MIXER, PUMP }, new[] { E1, E2, E3, E4, E5, E6, E7},false);
-var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] {VOUT, TANK, PROCESS }, new[] {E1});
+var Monolitico = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { VIN, VOUT, TANK, PROCESS, MIXER, PUMP, TEMP }, new[] { E1, E2, E3, E4, E5, E6, E7, E8},false);
+var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] {TEMP, TANK, VIN, VOUT, PROCESS }, new[] {E8});
 //var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] { G1 }, new[] {E3});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { VIN, VOUT }, new[] {E1});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants.ToArray(), specs.ToArray());

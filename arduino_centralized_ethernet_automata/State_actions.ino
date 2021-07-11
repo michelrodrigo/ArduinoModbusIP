@@ -98,6 +98,26 @@ void PUMP_1_action(){
   pump = true;
 }
 
+void TEMP_0_action(){
+    Serial.println("TEMP control turned off");
+    
+}
+
+void TEMP_1_action(){
+  Serial.println("TEMP control turned on");
+ 
+}
+
+void TEMP_2_action(){
+    Serial.println("Temp control heated");
+    
+}
+
+void TEMP_3_action(){
+  Serial.println("Temp control cooled");
+  
+}
+
 void S1_0_action(){
     S1.enable(start_process);
     Serial.println("S1 estado 0: ");
@@ -194,4 +214,14 @@ void S7_1_action(){
 void S7_2_action(){
   Serial.println("S7 estado 2: ");
   S7.disable(turn_off_pump);
+}
+
+void S8_0_action(){
+  Serial.println("S8 estado 0: ");
+  S8.disable(turn_on_tcontrol);
+}
+
+void S8_1_action(){
+  Serial.println("S7 estado 1: ");
+  S8.enable(turn_on_tcontrol);
 }

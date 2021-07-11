@@ -114,7 +114,7 @@ void build_automata();
 
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
 int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
@@ -125,6 +125,8 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define turn_off_mixer  controllable_events[6]
 #define turn_on_pump    controllable_events[7]
 #define turn_off_pump   controllable_events[8]
+#define turn_on_tcontrol  controllable_events[9]
+#define turn_off_tcontrol controllable_events[10]
 
 #define level_H1        uncontrollable_events[0]
 #define level_L1        uncontrollable_events[1]
@@ -135,7 +137,7 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define process_start   uncontrollable_events[6]
 
 
-#define NUM_C_EVENTS 10
+#define NUM_C_EVENTS 12
 #define NUM_U_EVENTS 7
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
@@ -178,6 +180,12 @@ State MIXER_1(&MIXER_1_action, NULL, 1);
 State PUMP_0(&PUMP_0_action, NULL, 0);
 State PUMP_1(&PUMP_1_action, NULL, 1);
 
+// Temp states
+State TEMP_0(&TEMP_0_action, NULL, 0);
+State TEMP_1(&TEMP_1_action, NULL, 1);
+State TEMP_2(&TEMP_0_action, NULL, 2);
+State TEMP_3(&TEMP_1_action, NULL, 3);
+
 // Supervisor of specification E1 - states
 State S1_0(&S1_0_action, NULL, 0);
 State S1_1(&S1_1_action, NULL, 1);
@@ -209,6 +217,10 @@ State S7_0(&S7_0_action, NULL, 0);
 State S7_1(&S7_1_action, NULL, 1);
 State S7_2(&S7_2_action, NULL, 2);
 
+// Supervisor of specification E8 - states
+State S8_0(&S8_0_action, NULL, 0);
+State S8_1(&S8_1_action, NULL, 1);
+
 
 
 
@@ -219,6 +231,7 @@ Automaton VOUT(&VOUT_0);
 Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
+Automaton TEMP(&TEMP_0);
 
 Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
@@ -227,6 +240,7 @@ Supervisor S4(&S4_0);
 Supervisor S5(&S5_0);
 Supervisor S6(&S6_0);
 Supervisor S7(&S7_0);
+Supervisor S8(&S8_0);
 
 
 
@@ -271,6 +285,7 @@ void setup () {
   S5.trigger(init);
   S6.trigger(init);
   S7.trigger(init);
+  S8.trigger(init);
 
   ts = millis();
 
@@ -307,7 +322,7 @@ void loop () {
           System.trigger_if_possible(process_start);
        }
        if(PROCESS.current_state() == Filling && stateLevel == 1){      
-          System.trigger_if_possible(full);
+          System.trigger_if_possible(level_H1);
           
        }
        if(PROCESS.current_state() == Heating && cool){
@@ -318,18 +333,12 @@ void loop () {
           System.trigger_if_possible(cooled);
        }
        if(PROCESS.current_state() == Draining && stateLevel == 0 ){
-          System.trigger_if_possible(empty);
+          System.trigger_if_possible(level_L1);
        }
-    
-       //Process states
-       switch(state_process){
-          case(0):
-            aux = 0;
-            break;
-          case(1):        
-            break;
-          case(2):
-            myPID.Compute();      
+
+       //Serial.println(String("Current temp state: ") + TEMP.current_state());
+       if(TEMP.current_state() == 1){
+           myPID.Compute();      
             error = Setpoint - Input;
             if(aux/10 < timerMixer){
               aux++;
@@ -340,23 +349,23 @@ void loop () {
             else{
               cool = true;
             }
-            break;
-          case(3):
-              Setpoint = Setpoint2;
-              myPID.Compute();     
-              error = Setpoint - Input;
-              if(aux/10 < timerMixer){
-                aux++;
-                if(abs(error) > 5){
-                  aux = 0; 
-                }
+       }
+       else if(TEMP.current_state() ==  2){
+           Setpoint = Setpoint2;
+            myPID.Compute();     
+            error = Setpoint - Input;
+            if(aux/10 < timerMixer){
+              aux++;
+              if(abs(error) > 5){
+                aux = 0; 
               }
-              else{
-                drain_out = true;
-              }        
-              break;
+            }
+            else{
+              drain_out = true;
+            }    
         
        }
+
        
    
    }
