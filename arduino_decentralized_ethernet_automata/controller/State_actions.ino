@@ -40,18 +40,25 @@ void VIN_0_action(){
    Serial.println("VIN estado 0");
    digitalWrite(v_in, LOW);
    valve_in = false;
+   CAN.beginPacket(0x12);
+    CAN.write('b');
+    CAN.endPacket();
 }
 
 void VIN_1_action(){
     Serial.println("VIN estado 1");
     digitalWrite(v_in, HIGH);
     valve_in = true;
+    CAN.beginPacket(0x12);
+    CAN.write('a');
+    CAN.endPacket();
 }
 
 void VOUT_0_action(){
     Serial.println("VOUT estado 0");
     digitalWrite(v_out, LOW);
     valve_out = false;
+    
 }
 
 void VOUT_1_action(){
