@@ -47,8 +47,18 @@ State VIN_1(&VIN_1_action, NULL, 1);
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
 
+// Mixer states
+State MIXER_0(&MIXER_0_action, NULL, 0);
+State MIXER_1(&MIXER_1_action, NULL, 1);
+
+// Pump states
+State PUMP_0(&PUMP_0_action, NULL, 0);
+State PUMP_1(&PUMP_1_action, NULL, 1);
+
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
+Automaton MIXER(&MIXER_0);
+Automaton PUMP(&PUMP_0);
 
 char received_event;
 
@@ -146,6 +156,16 @@ void build_automata(){
   VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
   VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
 
+   Serial.println("MIXER");
+  MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
+  MIXER.add_transition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
+  
+  Serial.println("PUMP");
+  PUMP.add_transition(&PUMP_0, &PUMP_1, turn_on_pump, NULL);
+  PUMP.add_transition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
+
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
+  System.add_plant(&MIXER);
+  System.add_plant(&PUMP);
 }

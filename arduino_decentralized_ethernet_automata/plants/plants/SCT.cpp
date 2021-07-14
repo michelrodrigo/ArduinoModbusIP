@@ -182,31 +182,31 @@ void DES::add_supervisor(Supervisor* sup)
 bool DES::trigger_if_possible(int event)
 {
 
-  for (int i = 0; i < m_num_plants; i++)
-  {
-    Serial.print("Is defined: ");
-    Serial.print(m_plants[i]->is_defined(event)+ String(" "));
-    Serial.println();
-    if (m_plants[i]->is_defined(event)){
-      Serial.print(" Is feasible: ");
-      Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
-      Serial.println();
-      if(!m_plants[i]->is_feasible(event)){
-        Serial.println("  Event not possible.");
-        return false;
-      }
-    }
-  }
-  
-  for (int i = 0; i < m_num_sups; i++)
-  {
-    Serial.print("Disabled: ");
-    Serial.println(m_supervisors[i]->is_disabled(event));
-    if (m_supervisors[i]->is_disabled(event)){
-      Serial.println("Event disabled.");
-      return false;
-    }
-  }
+//  for (int i = 0; i < m_num_plants; i++)
+//  {
+//    Serial.print("Is defined: ");
+//    Serial.print(m_plants[i]->is_defined(event)+ String(" "));
+//    Serial.println();
+//    if (m_plants[i]->is_defined(event)){
+//      Serial.print(" Is feasible: ");
+//      Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
+//      Serial.println();
+//      if(!m_plants[i]->is_feasible(event)){
+//        Serial.println("  Event not possible.");
+//        return false;
+//      }
+//    }
+//  }
+//  
+//  for (int i = 0; i < m_num_sups; i++)
+//  {
+//    Serial.print("Disabled: ");
+//    Serial.println(m_supervisors[i]->is_disabled(event));
+//    if (m_supervisors[i]->is_disabled(event)){
+//      Serial.println("Event disabled.");
+//      return false;
+//    }
+//  }
   
   for (int i = 0; i < m_num_plants; i++)
   {

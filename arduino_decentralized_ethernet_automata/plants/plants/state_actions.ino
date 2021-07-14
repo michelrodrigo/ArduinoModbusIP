@@ -19,3 +19,23 @@ void VOUT_1_action(){
   digitalWrite(v_out, HIGH);
 
 }
+
+void MIXER_0_action(){
+    Serial.println("MIXER turned off");
+    
+}
+
+void MIXER_1_action(){
+  Serial.println("MIXER turned on");
+ 
+}
+
+void PUMP_0_action(){
+    Serial.println("PUMP turned off");
+    
+}
+
+void PUMP_1_action(){
+  Serial.println("PUMP turned on");
+  
+}
