@@ -31,7 +31,6 @@ Created in 22/06/2021
 #define RANDOM        1
 #define PRIORITY      2
 #define LIST          3
-#define PLANT         4
 
 /* State 
  * Each state has:

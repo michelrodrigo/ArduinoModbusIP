@@ -218,13 +218,13 @@ bool DES::trigger_if_possible(int event)
     m_supervisors[i]->trigger(event);
   }
   
-  //this->enabledEvents();
-  //this->updateDES();
-//  Serial.print("Enabled events: ");
-//   for(int i = 0; i < m_num_c_events; i++){
-//      Serial.print(enabled_events[i] + String(" "));
-//   }
-//   Serial.println();
+  this->enabledEvents();
+  this->updateDES();
+  Serial.print("Enabled events: ");
+   for(int i = 0; i < m_num_c_events; i++){
+      Serial.print(enabled_events[i] + String(" "));
+   }
+   Serial.println();
   return true;
 }
 
@@ -267,8 +267,6 @@ void DES::enabledEvents(){
       enabled_events[i] = 0;
     }
   }
-
-  
 
 }
 
@@ -363,10 +361,6 @@ void DES::updateDES(){
           m_next_event = 0;
         }
       }
-
-      break;
-
-    case(PLANT):
 
       break;
   }

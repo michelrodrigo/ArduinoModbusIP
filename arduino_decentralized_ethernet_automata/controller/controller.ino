@@ -294,7 +294,7 @@ void setup () {
 
   randomSeed(analogRead(A5));
 
-    Serial.println("CAN Sender");
+  Serial.println("CAN Sender");
   CAN.setPins(53);
   // start the CAN bus at 500 kbps
   if (!CAN.begin(500E3)) {
