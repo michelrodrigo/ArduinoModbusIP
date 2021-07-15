@@ -318,6 +318,38 @@ void loop () {
   //Call once inside loop() - all magic here
   mb.task();
 
+    // try to parse packet
+  int packetSize = CAN.parsePacket();
+
+  if (packetSize) {
+    // received a packet
+    Serial.print("Received ");
+
+    if (CAN.packetExtended()) {
+      Serial.print("extended ");
+    }
+
+    if (CAN.packetRtr()) {
+      // Remote transmission request, packet contains no data
+      Serial.print("RTR ");
+    }
+
+    Serial.print("packet with id 0x");
+    Serial.print(CAN.packetId(), HEX);
+
+    if (CAN.packetRtr()) {
+      Serial.print(" and requested length ");
+      Serial.println(CAN.packetDlc());
+    } else {
+      Serial.print(" and length ");
+      Serial.println(packetSize);
+
+       System.trigger_if_possible(get_event(packetSize));
+      }
+      Serial.println();
+    }
+  
+
    if (millis() > ts + 100) {
        ts = millis();
        update_io();

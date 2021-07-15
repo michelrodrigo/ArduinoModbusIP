@@ -94,21 +94,33 @@ void TANK_3_action(){
 void MIXER_0_action(){
     Serial.println("MIXER turned off");
     mixer = false;
+    CAN.beginPacket(1);
+    CAN.write(turn_off_mixer);
+    CAN.endPacket();
 }
 
 void MIXER_1_action(){
   Serial.println("MIXER turned on");
   mixer = true;
+  CAN.beginPacket(1);
+  CAN.write(turn_on_mixer);
+  CAN.endPacket();
 }
 
 void PUMP_0_action(){
     Serial.println("PUMP turned off");
     pump = false;
+    CAN.beginPacket(1);
+    CAN.write(turn_off_pump);
+    CAN.endPacket();
 }
 
 void PUMP_1_action(){
   Serial.println("PUMP turned on");
   pump = true;
+  CAN.beginPacket(1);
+  CAN.write(turn_on_pump);
+  CAN.endPacket();
 }
 
 void TEMP_0_action(){

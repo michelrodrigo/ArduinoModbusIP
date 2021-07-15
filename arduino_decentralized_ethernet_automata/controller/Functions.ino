@@ -145,6 +145,21 @@ void build_automata(){
   
 }
 
+int get_event(int packet_size){
+  int id = CAN.packetId();
+  int received_event;
+  int event;
+  int aux;
+
+  
+   received_event = (int)CAN.read();
+  Serial.println(String("Received event: ") + received_event);
+
+  return received_event;
+
+  
+}
+
 void update_io(){
 
    

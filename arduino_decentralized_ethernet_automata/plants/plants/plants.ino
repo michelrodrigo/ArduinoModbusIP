@@ -47,6 +47,12 @@ State VIN_1(&VIN_1_action, NULL, 1);
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
 
+// tank state
+State TANK_0(&TANK_0_action, NULL, 0);
+State TANK_1(&TANK_1_action, NULL, 1);
+State TANK_2(&TANK_2_action, NULL, 2);
+State TANK_3(&TANK_3_action, NULL, 3);
+
 // Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
 State MIXER_1(&MIXER_1_action, NULL, 1);
@@ -57,6 +63,7 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
+Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 
@@ -65,6 +72,8 @@ char received_event;
 
 void build_automata();
 int get_event(int packet_size);
+
+int tank_level = 0;
 
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 
@@ -88,6 +97,14 @@ void setup() {
 }
 
 void loop() {
+
+  if (Serial.available()) {
+    int input = Serial.parseInt();
+
+    CAN.beginPacket(1);
+    CAN.write(input);
+    CAN.endPacket();
+  }
 
     // try to parse packet
   int packetSize = CAN.parsePacket();
@@ -120,8 +137,19 @@ void loop() {
       Serial.println();
     }
 
-    //Serial.println();
-  }
+    if(TANK.current_state() == 1){
+      tank_level++;
+      if(tank_level >= 60){
+         System.trigger_if_possible(level_H1);
+      }      
+    }
+    else if(TANK.current_state() == 3){
+      tank_level--;
+      if(tank_level <= 5){
+         System.trigger_if_possible(level_L1);
+      }      
+    }
+}
  
    
     
@@ -156,6 +184,12 @@ void build_automata(){
   VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
   VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
 
+  Serial.println("TANK");
+  TANK.add_transition(&TANK_0, &TANK_1, open_vin, NULL);  
+  TANK.add_transition(&TANK_1, &TANK_2, level_H1, NULL);
+  TANK.add_transition(&TANK_2, &TANK_3, open_vout, NULL);
+  TANK.add_transition(&TANK_3, &TANK_0, level_L1, NULL);
+
    Serial.println("MIXER");
   MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
   MIXER.add_transition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
@@ -166,6 +200,7 @@ void build_automata(){
 
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
+  System.add_plant(&TANK);
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
 }

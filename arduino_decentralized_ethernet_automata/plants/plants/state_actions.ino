@@ -20,6 +20,32 @@ void VOUT_1_action(){
 
 }
 
+void TANK_0_action(){
+  Serial.println("esvaziou");
+
+  CAN.beginPacket(1);
+   CAN.write(level_L1);
+   CAN.endPacket();
+ 
+}
+
+void TANK_1_action(){
+    Serial.println("enchendo");
+}
+
+void TANK_2_action(){
+  Serial.println("encheu");
+   
+   CAN.beginPacket(1);
+   CAN.write(level_H1);
+   CAN.endPacket();
+  
+}
+
+void TANK_3_action(){
+    Serial.println("esvaziando");
+}
+
 void MIXER_0_action(){
     Serial.println("MIXER turned off");
     
