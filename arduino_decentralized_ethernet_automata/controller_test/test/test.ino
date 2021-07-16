@@ -28,6 +28,8 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define NUM_C_EVENTS 12
 #define NUM_U_EVENTS 7
 
+int level;
+double ts;
 
 void setup() {
   Serial.begin(9600);
@@ -37,7 +39,8 @@ void setup() {
     Serial.println("Starting CAN failed!");
     while (1);
   }
-  
+
+  ts = millis();
   
 }
 
@@ -53,39 +56,28 @@ void loop() {
   }
 
   int packetSize = CAN.parsePacket();
-
-  if (packetSize) {
-    // received a packet
-    Serial.print("Received ");
-
-    if (CAN.packetExtended()) {
-      Serial.print("extended ");
-    }
-
-    if (CAN.packetRtr()) {
-      // Remote transmission request, packet contains no data
-      Serial.print("RTR ");
-    }
-
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
-
-    if (CAN.packetRtr()) {
-      Serial.print(" and requested length ");
-      Serial.println(CAN.packetDlc());
-    } else {
-      Serial.print(" and length ");
-      Serial.println(packetSize);
-
-      // only print packet data for non-RTR packets
-      while (CAN.available()) {
-        Serial.print(CAN.read());
-      }
-      Serial.println();
-    }
-
-    Serial.println();
-  }
   
+  int pcktId = CAN.packetId();
+  //Serial.println(String("Tamanho ")+ packetSize + String(" Id ") + pcktId);
+   if (packetSize) {
+    // received a packet
+    
+
+    if(pcktId == 1){
+      //System.trigger_if_possible(get_event()); 
+    }
+    else if(pcktId == 2){
+      
+      level = (int)CAN.read();
+    }
+    
+    }
+    if(millis() - ts > 100){
+      ts = millis();
+
+       Serial.println(level);
+    }
+    
+   
 
 }

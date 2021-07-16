@@ -158,26 +158,23 @@ void loop() {
     }
 
     if(TANK.current_state() == 1){
-      tank_level++;
-      delay(50);
-      if(tank_level >= 60){
+      if(level >= 60){
          System.trigger(level_H1);
       }      
     }
     else if(TANK.current_state() == 3){
-      tank_level--;
-      delay(50);
-      if(tank_level <= 5){
+      if(level <= 5){
          System.trigger(level_L1);
       }      
     }
 
-    if (millis() > ts + 100) {
+    if (millis() > (ts + 100)) {
        ts = millis();
 
        CAN.beginPacket(2);
        CAN.write(level);
        CAN.endPacket();
+       //Serial.println(level);
     
 }
 }

@@ -330,7 +330,7 @@ void loop () {
       System.trigger_if_possible(get_event()); 
     }
     else if(pcktId == 2){
-      level = CAN.parseInt();
+      level = (int)CAN.read();
     }
     
     }
@@ -349,7 +349,7 @@ void loop () {
           System.trigger_if_possible(process_start);
        }
        if(PROCESS.current_state() == Filling && stateLevel == 1){      
-          System.trigger_if_possible(level_H1);
+          //System.trigger_if_possible(level_H1);
           
        }
        if(PROCESS.current_state() == Heating && cool){
@@ -360,7 +360,7 @@ void loop () {
           System.trigger_if_possible(cooled);
        }
        if(PROCESS.current_state() == Draining && stateLevel == 0 ){
-          System.trigger_if_possible(level_L1);
+          //System.trigger_if_possible(level_L1);
        }
 
        //Serial.println(String("Current temp state: ") + TEMP.current_state());
