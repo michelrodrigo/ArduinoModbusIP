@@ -79,7 +79,7 @@ void loop() {
 
       // only print packet data for non-RTR packets
       while (CAN.available()) {
-        Serial.print((char)CAN.parseInt());
+        Serial.print(CAN.read());
       }
       Serial.println();
     }

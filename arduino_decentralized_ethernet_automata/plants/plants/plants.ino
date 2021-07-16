@@ -75,14 +75,14 @@ int get_event(int packet_size);
 
 int tank_level = 0;
 
-DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
+DES System;
 
 void setup() {
   Serial.begin(9600);
 
   build_automata();
 
-   System.setMode(PLANT, NULL, NUM_C_EVENTS);
+   
   
 
   pinMode(v_in, OUTPUT);
@@ -94,6 +94,8 @@ void setup() {
     Serial.println("Starting CAN failed!");
     while (1);
   }
+
+  
 }
 
 void loop() {
@@ -132,21 +134,23 @@ void loop() {
       Serial.print(" and length ");
       Serial.println(packetSize);
 
-       System.trigger_if_possible(get_event(packetSize));
+       System.trigger(get_event(packetSize));
       }
       Serial.println();
     }
 
     if(TANK.current_state() == 1){
       tank_level++;
+      delay(50);
       if(tank_level >= 60){
-         System.trigger_if_possible(level_H1);
+         System.trigger(level_H1);
       }      
     }
     else if(TANK.current_state() == 3){
       tank_level--;
+      delay(50);
       if(tank_level <= 5){
-         System.trigger_if_possible(level_L1);
+         System.trigger(level_L1);
       }      
     }
 }
@@ -167,6 +171,9 @@ int get_event(int packet_size){
 
   
    received_event = (int)CAN.read();
+   digitalWrite(v_out, HIGH);
+   delay(100);
+   digitalWrite(v_out, LOW);
   Serial.println(String("Received event: ") + received_event);
 
   return received_event;
