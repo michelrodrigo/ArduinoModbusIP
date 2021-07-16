@@ -244,7 +244,7 @@ Supervisor S7(&S7_0);
 Supervisor S8(&S8_0);
 
 
-
+int event_received;
 
 
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
@@ -310,7 +310,7 @@ void loop () {
 
   
 
-  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   analogWrite(outputPin, Output);
   
@@ -320,33 +320,19 @@ void loop () {
 
     // try to parse packet
   int packetSize = CAN.parsePacket();
+  int pcktId = CAN.packetId();
 
   if (packetSize) {
     // received a packet
-    Serial.print("Received ");
+    
 
-    if (CAN.packetExtended()) {
-      Serial.print("extended ");
+    if(pcktId == 1){
+      System.trigger_if_possible(get_event()); 
     }
-
-    if (CAN.packetRtr()) {
-      // Remote transmission request, packet contains no data
-      Serial.print("RTR ");
+    else if(pcktId == 2){
+      level = CAN.parseInt();
     }
-
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
-
-    if (CAN.packetRtr()) {
-      Serial.print(" and requested length ");
-      Serial.println(CAN.packetDlc());
-    } else {
-      Serial.print(" and length ");
-      Serial.println(packetSize);
-
-       System.trigger_if_possible(get_event(packetSize));
-      }
-      Serial.println();
+    
     }
   
 
@@ -426,11 +412,12 @@ void loop () {
    }
 
    // Level
-   if(level < 10 && stateLevel == 1){
+   //if(level < 10 && stateLevel == 1){
+   if(event_received == level_L1 && stateLevel == 1){
       System.trigger_if_possible(level_L1);
        stateLevel = 0;
    }
-   else if(level >= maxLevel && stateLevel == 0){
+   else if(event_received == level_H1 && stateLevel == 0){
       System.trigger_if_possible(level_H1);   
       stateLevel = 1; 
    }
@@ -445,6 +432,7 @@ void loop () {
       digitalWrite(led, LOW);
    }
 
+   
   
 
    

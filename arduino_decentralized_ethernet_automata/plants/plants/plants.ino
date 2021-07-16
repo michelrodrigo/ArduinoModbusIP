@@ -7,6 +7,18 @@
 int v_in = 2; //input valve
 int v_out = 3; //output valve
 
+char received_event;
+
+
+void build_automata();
+int get_event(int packet_size);
+
+int tank_level = 0;
+
+int level;
+int levelSensorPin = A0;
+double ts;
+
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
@@ -38,6 +50,15 @@ void VIN_0_action();
 void VIN_1_action();
 void VOUT_0_action();
 void VOUT_1_action();
+void TANK_0_action();
+void TANK_1_action();
+void TANK_2_action();
+void TANK_3_action();
+void MIXER_0_action();
+void MIXER_1_action();
+void PUMP_0_action();
+void PUMP_1_action();
+
 
 // Input valve states
 State VIN_0(&VIN_0_action, NULL, 0);
@@ -67,13 +88,7 @@ Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 
-char received_event;
 
-
-void build_automata();
-int get_event(int packet_size);
-
-int tank_level = 0;
 
 DES System;
 
@@ -95,11 +110,14 @@ void setup() {
     while (1);
   }
 
+  ts = millis();
   
 }
 
 void loop() {
 
+  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  
   if (Serial.available()) {
     int input = Serial.parseInt();
 
@@ -153,8 +171,16 @@ void loop() {
          System.trigger(level_L1);
       }      
     }
+
+    if (millis() > ts + 100) {
+       ts = millis();
+
+       CAN.beginPacket(2);
+       CAN.write(level);
+       CAN.endPacket();
+    
 }
- 
+}
    
     
 

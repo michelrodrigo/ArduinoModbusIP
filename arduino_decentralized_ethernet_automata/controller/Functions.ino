@@ -145,7 +145,7 @@ void build_automata(){
   
 }
 
-int get_event(int packet_size){
+int get_event(){
   int id = CAN.packetId();
   int received_event;
   int event;
