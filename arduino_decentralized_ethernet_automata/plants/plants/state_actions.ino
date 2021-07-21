@@ -65,3 +65,30 @@ void PUMP_1_action(){
   Serial.println("PUMP turned on");
   
 }
+
+void TEMP_0_action(){
+    Serial.println("TEMP control turned off");
+    
+    
+}
+
+void TEMP_1_action(){
+  Serial.println("TEMP control turned on");
+  aux = 0;
+}
+
+void TEMP_2_action(){
+    Serial.println("Temp control heated");
+    aux = 0;
+    CAN.beginPacket(1);
+    CAN.write(heated);
+    CAN.endPacket();
+}
+
+void TEMP_3_action(){
+  Serial.println("Temp control cooled");
+  CAN.beginPacket(1);
+  CAN.write(cooled);
+  CAN.endPacket();
+  
+}

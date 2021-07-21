@@ -30,6 +30,9 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 
 int level;
 double ts;
+int Input;
+int Output;
+int aux;
 
 void setup() {
   Serial.begin(9600);
@@ -69,13 +72,17 @@ void loop() {
     else if(pcktId == 2){
       
       level = (int)CAN.read();
+      aux = (int)CAN.read();        
+      Input = (int)CAN.read() | (aux << 8);     
+    
+      Output = (int)CAN.read();   
     }
     
     }
     if(millis() - ts > 100){
       ts = millis();
 
-       Serial.println(level);
+       Serial.println(level + String(" ")+ Input + String(" ") + Output);
     }
     
    

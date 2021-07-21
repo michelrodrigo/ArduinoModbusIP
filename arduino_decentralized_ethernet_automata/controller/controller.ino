@@ -23,12 +23,12 @@
 ModbusIP mb;
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output, Setpoint2;
+int Setpoint, Input, Output, Setpoint2;
 int newSetpoint, newSetpoint2;
 
 //Specify the links and initial tuning parameters
-double Kp=2, Ki=5, Kd=1;
-PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+//double Kp=2, Ki=5, Kd=1;
+//PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 long ts; // stores the time
 
@@ -262,7 +262,7 @@ void setup () {
   read_level_levels();
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
    //turn the PID on
-  myPID.SetMode(AUTOMATIC);
+  //myPID.SetMode(AUTOMATIC);
 
   // The media access control (ethernet hardware) address for the shield
   byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -302,7 +302,7 @@ void setup () {
     while (1);
   }
 
-  delay(2000);
+  delay(5000);
 
 }
 
@@ -311,8 +311,8 @@ void loop () {
   
 
   //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
-  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
-  analogWrite(outputPin, Output);
+  //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
+  //analogWrite(outputPin, Output);
   
  
   //Call once inside loop() - all magic here
@@ -331,7 +331,12 @@ void loop () {
     }
     else if(pcktId == 2){
       level = (int)CAN.read();
+      aux = (int)CAN.read();        
+      Input = (int)CAN.read() | (aux << 8);     
+    
+      Output = (int)CAN.read();      
     }
+    
     
     }
   
@@ -339,6 +344,7 @@ void loop () {
    if (millis() > ts + 100) {
        ts = millis();
        update_io();
+       //Serial.println(start_process);
        //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
 
        
@@ -353,45 +359,45 @@ void loop () {
           
        }
        if(PROCESS.current_state() == Heating && cool){
-         System.trigger_if_possible(heated);
+         //System.trigger_if_possible(heated);
           
        }
        if(PROCESS.current_state() == Cooling && drain_out){
-          System.trigger_if_possible(cooled);
+          //System.trigger_if_possible(cooled);
        }
        if(PROCESS.current_state() == Draining && stateLevel == 0 ){
           //System.trigger_if_possible(level_L1);
        }
 
        //Serial.println(String("Current temp state: ") + TEMP.current_state());
-       if(TEMP.current_state() == 1){
-           myPID.Compute();      
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              cool = true;
-            }
-       }
-       else if(TEMP.current_state() ==  2){
-           Setpoint = Setpoint2;
-            myPID.Compute();     
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              drain_out = true;
-            }    
-        
-       }
+//       if(TEMP.current_state() == 1){
+//           myPID.Compute();      
+//            error = Setpoint - Input;
+//            if(aux/10 < timerMixer){
+//              aux++;
+//              if(abs(error) > 5){
+//                aux = 0; 
+//              }
+//            }
+//            else{
+//              cool = true;
+//            }
+//       }
+//       else if(TEMP.current_state() ==  2){
+//           Setpoint = Setpoint2;
+//            myPID.Compute();     
+//            error = Setpoint - Input;
+//            if(aux/10 < timerMixer){
+//              aux++;
+//              if(abs(error) > 5){
+//                aux = 0; 
+//              }
+//            }
+//            else{
+//              drain_out = true;
+//            }    
+//        
+//       }
 
        
    
