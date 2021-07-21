@@ -174,6 +174,7 @@ void update_io(){
      if(newSetpoint != Setpoint){
         Setpoint = newSetpoint;
         update_setpoint();
+        
      }
    }
 
@@ -310,6 +311,13 @@ void update_setpoint(){
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+1, value3);
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+2, value2);
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+3, value1);
+
+  CAN.beginPacket(3);
+  CAN.write(Setpoint >> 8);
+  CAN.write(Setpoint & 0XFF);
+  CAN.write(Setpoint2 >> 8);
+  CAN.write(Setpoint2 & 0XFF);
+  CAN.endPacket();
 }
 
 void read_setpoint(){  

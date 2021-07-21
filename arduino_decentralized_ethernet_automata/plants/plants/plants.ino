@@ -3,18 +3,33 @@
 #include "SCT.h"
 #include <CAN.h>
 #include <PID_v1.h>
+#include <EEPROM.h>
 
 
 // Constants --------------------------------------------------------------
 
 #define MAX_TEMP 300 // maximum temperature value
 #define MIN_TEMP 10  // minimum temperature value
+#define MAX_LEVEL 100 // maximum temperature value
+#define MIN_LEVEL 10  // minimum temperature value
+#define MAX_TIMER 30 // maximum time for the mixer
+#define MIN_TIMER 2  // minimum time for the mixer
 
 // Pins --------------------------------------------------------------
 int v_in = 2; //input valve
 int v_out = 3; //output valve
 int outputPin   = 5;    // The pin the digital output PMW is connected to
 int sensorPin   = A1;   // The pin the analog sensor is connected to
+
+
+// EEPROM ADDRESSES ------------------------------------------------------
+#define TEMP_SETPOINT_ADDRESS 0
+#define TEMP_H1_ADDRESS 4
+#define TEMP_H2_ADDRESS 8
+#define TEMP_H3_ADDRESS 12
+#define MAX_LEVEL_ADDRESS 16
+#define TIMER_MIXER_ADDRESS 20
+#define TEMP2_SETPOINT_ADDRESS 24
 
 char received_event;
 
@@ -30,14 +45,18 @@ int get_event(int packet_size);
 int tank_level = 0;
 
 int error = 0;
-int aux = 0; 
+int aux = 0;
+int partial_sp = 0; 
 int timerMixer = 20; 
+
+int maxLevel = 90;
+int newMaxLevel = 0;
 
 int input, output;
 
 int level;
 int levelSensorPin = A0;
-double ts;
+double ts, ts2;
 
 
 // Events ---------------------------------------------------------------
@@ -143,8 +162,8 @@ void setup() {
   }
 
   ts = millis();
-  Setpoint = 150;
-  Setpoint2 = 100;
+  ts2 = millis();
+  read_setpoint();
   
 }
 
@@ -165,33 +184,23 @@ void loop() {
   
     // try to parse packet
   int packetSize = CAN.parsePacket();
+  int packId = CAN.packetId();
 
   if (packetSize) {
-    // received a packet
-    Serial.print("Received ");
 
-    if (CAN.packetExtended()) {
-      Serial.print("extended ");
-    }
-
-    if (CAN.packetRtr()) {
-      // Remote transmission request, packet contains no data
-      Serial.print("RTR ");
-    }
-
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
-
-    if (CAN.packetRtr()) {
-      Serial.print(" and requested length ");
-      Serial.println(CAN.packetDlc());
-    } else {
-      Serial.print(" and length ");
-      Serial.println(packetSize);
-
+    if(packId == 1){
        System.trigger(get_event(packetSize));
-      }
-      Serial.println();
+    }
+    else if(packId == 3){//setpoints
+      partial_sp = (int)CAN.read();  
+      Setpoint = (int)CAN.read() | (partial_sp << 8); 
+      partial_sp = (int)CAN.read();  
+      Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
+      Serial.println("Novo setpoint recebido") ;
+      update_setpoint();
+    }
+      
+      
     }
 
     if(TANK.current_state() == 1){
@@ -205,36 +214,39 @@ void loop() {
       }      
     }
 
-    if(TEMP.current_state() == 1){
-           myPID.Compute();      
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
+     if (millis() > (ts2 + 100)) {
+       ts2 = millis();
+      if(TEMP.current_state() == 1){
+             myPID.Compute();      
+              error = Setpoint - Input;
+              if(aux/10 < timerMixer){
+                aux++;
+                if(abs(error) > 5){
+                  aux = 0; 
+                }
               }
-            }
-            else{
-              System.trigger(heated);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter
-       }
-       else if(TEMP.current_state() ==  2){
-           Setpoint = Setpoint2;
-            myPID.Compute();     
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
+              else{
+                System.trigger(heated);
               }
-            }
-            else{
-              System.trigger(cooled);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
-        
-       }
+              //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter
+         }
+         else if(TEMP.current_state() ==  2){
+             Setpoint = Setpoint2;
+              myPID.Compute();     
+              error = Setpoint - Input;
+              if(aux/10 < timerMixer){
+                aux++;
+                if(abs(error) > 5){
+                  aux = 0; 
+                }
+              }
+              else{
+                System.trigger(cooled);
+              }
+              //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
+          
+         }
+     }
 
     if (millis() > (ts + 950)) {
        ts = millis();
@@ -323,5 +335,68 @@ void build_automata(){
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
   System.add_plant(&TEMP);
+  
+}
+
+void update_setpoint(){
+
+  int aux = 0;
+  int value1 = Setpoint / 1000;
+  aux = Setpoint - value1 * 1000;
+  int value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  int value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP_SETPOINT_ADDRESS, aux);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+1, value3);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+2, value2);
+  EEPROM.update(TEMP_SETPOINT_ADDRESS+3, value1); 
+
+  value1 = Setpoint2 / 1000;
+  aux = Setpoint2 - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS, aux);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+1, value3);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+2, value2);
+  EEPROM.update(TEMP2_SETPOINT_ADDRESS+3, value1);
+}
+
+void read_setpoint(){  
+  Setpoint = EEPROM.read(TEMP_SETPOINT_ADDRESS) + EEPROM.read(TEMP_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP_SETPOINT_ADDRESS+3)*1000; 
+  Setpoint2 = EEPROM.read(TEMP2_SETPOINT_ADDRESS) + EEPROM.read(TEMP2_SETPOINT_ADDRESS+1)*10 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+2)*100 + EEPROM.read(TEMP2_SETPOINT_ADDRESS+3)*1000; 
+}
+
+
+void update_level_levels(){
+  int value1 = maxLevel / 1000;
+  int aux = maxLevel - value1 * 1000;
+  int value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  int value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(MAX_LEVEL_ADDRESS, aux);
+  EEPROM.update(MAX_LEVEL_ADDRESS+1, value3);
+  EEPROM.update(MAX_LEVEL_ADDRESS+2, value2);
+  EEPROM.update(MAX_LEVEL_ADDRESS+3, value1);  
+
+  value1 = timerMixer / 1000;
+  aux = timerMixer - value1 * 1000;
+  value2 =  aux / 100;
+  aux = aux - value2 * 100;
+  value3 = aux / 10;
+  aux = aux - value3 * 10;
+  EEPROM.update(TIMER_MIXER_ADDRESS, aux);
+  EEPROM.update(TIMER_MIXER_ADDRESS+1, value3);
+  EEPROM.update(TIMER_MIXER_ADDRESS+2, value2);
+  EEPROM.update(TIMER_MIXER_ADDRESS+3, value1);  
+  
+  
+}
+void read_level_levels(){
+  maxLevel = EEPROM.read(MAX_LEVEL_ADDRESS) + EEPROM.read(MAX_LEVEL_ADDRESS+1)*10 + EEPROM.read(MAX_LEVEL_ADDRESS+2)*100 + EEPROM.read(MAX_LEVEL_ADDRESS+3)*1000; 
+  timerMixer = EEPROM.read(TIMER_MIXER_ADDRESS) + EEPROM.read(TIMER_MIXER_ADDRESS+1)*10 + EEPROM.read(TIMER_MIXER_ADDRESS+2)*100 + EEPROM.read(TIMER_MIXER_ADDRESS+3)*1000; 
   
 }
