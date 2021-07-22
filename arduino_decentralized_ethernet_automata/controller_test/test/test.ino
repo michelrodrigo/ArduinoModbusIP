@@ -49,6 +49,25 @@ void setup() {
 
 void loop() {
 
+  int packetSize = CAN.parsePacket();
+  
+        int pcktId = CAN.packetId();
+      //Serial.println(String("Tamanho ")+ packetSize + String(" Id ") + pcktId);
+       if (packetSize) {
+        // received a packet
+    
+
+    if(pcktId == 1){
+      //System.trigger_if_possible(get_event()); 
+    }
+    else if(pcktId == 2){
+      
+      //level = (int)CAN.read();
+      aux = CAN.read();        
+      Input = CAN.read() | (aux << 8);     
+    
+      //Output = (int)CAN.read();   
+    }
   
   if (Serial.available()) {
     int input = Serial.parseInt();
@@ -64,25 +83,7 @@ void loop() {
 
        Serial.println(level + String(" ")+ Input + String(" ") + Output);
 
-       int packetSize = CAN.parsePacket();
-  
-        int pcktId = CAN.packetId();
-      //Serial.println(String("Tamanho ")+ packetSize + String(" Id ") + pcktId);
-       if (packetSize) {
-        // received a packet
-    
-
-    if(pcktId == 1){
-      //System.trigger_if_possible(get_event()); 
-    }
-    else if(pcktId == 2){
-      
-      level = (int)CAN.read();
-      aux = CAN.read();        
-      Input = CAN.read() | (aux << 8);     
-    
-      Output = (int)CAN.read();   
-    }
+       
     
     }
     }

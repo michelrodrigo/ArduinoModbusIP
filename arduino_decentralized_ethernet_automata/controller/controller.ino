@@ -1,6 +1,6 @@
 
 // Libraries ---------------------------------------------------------------
-#include <PID_v1.h>
+
 #include <Ethernet.h>
 #include <Modbus.h>
 #include <ModbusIP.h>
@@ -25,10 +25,6 @@ ModbusIP mb;
 //Define Variables we'll be connecting to
 int Setpoint, Input, Output, Setpoint2;
 int newSetpoint, newSetpoint2;
-
-//Specify the links and initial tuning parameters
-//double Kp=2, Ki=5, Kd=1;
-//PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 long ts; // stores the time
 
@@ -59,7 +55,7 @@ bool mixer = false;
 bool cool = false;
 bool pump = false;
 
-
+int event_received; //stores the event received
 
 
 // Pins -------------------------------------------------------------------
@@ -115,7 +111,7 @@ void build_automata();
 
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, };
 int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
@@ -138,12 +134,12 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define process_start   uncontrollable_events[6]
 
 
-#define NUM_C_EVENTS 12
+#define NUM_C_EVENTS 11
 #define NUM_U_EVENTS 7
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
 
-//int enabled_events[NUM_EVENTS];
+
 
 // States ---------------------------------------------------------------
 
@@ -184,8 +180,8 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Temp states
 State TEMP_0(&TEMP_0_action, NULL, 0);
 State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_0_action, NULL, 2);
-State TEMP_3(&TEMP_1_action, NULL, 3);
+State TEMP_2(&TEMP_2_action, NULL, 2);
+State TEMP_3(&TEMP_3_action, NULL, 3);
 
 // Supervisor of specification E1 - states
 State S1_0(&S1_0_action, NULL, 0);
@@ -223,8 +219,6 @@ State S8_0(&S8_0_action, NULL, 0);
 State S8_1(&S8_1_action, NULL, 1);
 
 
-
-
 // Automata ------------------------------------------------------------
 Automaton PROCESS(&PROCESS_0);
 Automaton VIN(&VIN_0);
@@ -243,10 +237,6 @@ Supervisor S6(&S6_0);
 Supervisor S7(&S7_0);
 Supervisor S8(&S8_0);
 
-
-int event_received;
-
-
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 
 void setup () {
@@ -261,8 +251,7 @@ void setup () {
   read_temp_levels();
   read_level_levels();
   Serial.println(start_process+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));;  //look for simulation results in plotter
-   //turn the PID on
-  //myPID.SetMode(AUTOMATIC);
+   
 
   // The media access control (ethernet hardware) address for the shield
   byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -270,12 +259,12 @@ void setup () {
   byte ip[] = { 192, 168, 0, 120 };
   //Config Modbus IP
   mb.config(mac, ip);
-  // Add LAMP1_COIL register - Use addCoil() for digital outputs
+  
 
   add_modbus_registers();
 
   build_automata();
-  //System.setMode(3, list, 4);
+  
   System.setMode(RANDOM, NULL, NUM_C_EVENTS);
 
   Serial.println("Initializing...");
@@ -294,10 +283,11 @@ void setup () {
 
   randomSeed(analogRead(A5));
 
+  
   Serial.println("CAN Sender");
-  CAN.setPins(53);
+  CAN.setPins(53); //sets  the CS pin as 53
   // start the CAN bus at 500 kbps
-  if (!CAN.begin(500E3)) {
+  if (!CAN.begin(500E3)) { // starts the CAN hardware
     Serial.println("Starting CAN failed!");
     while (1);
   }
@@ -306,101 +296,36 @@ void setup () {
 
 }
 
-void loop () {
-
-  
-
-  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
-  //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
-  //analogWrite(outputPin, Output);
-  
+void loop () {  
  
   //Call once inside loop() - all magic here
   mb.task();
 
-    // try to parse packet
+  // try to parse packet
   int packetSize = CAN.parsePacket();
   int pcktId = CAN.packetId();
 
-  if (packetSize) {
-    // received a packet
-    
 
-    if(pcktId == 1){
-      System.trigger_if_possible(get_event()); 
-    }
-    else if(pcktId == 2){
-      level = (int)CAN.read();
-      aux = (int)CAN.read();        
-      Input = (int)CAN.read() | (aux << 8);     
-    
-      Output = (int)CAN.read();      
-    }
-    
-    
-    }
+  if (packetSize) { //if there is a packet    
+
+      if(pcktId == 1){ // events from plant
+        System.trigger_if_possible(get_event()); 
+      }
+      else if(pcktId == 2){ // continuous variable values
+        level = (int)CAN.read();
+        aux = (int)CAN.read();        
+        Input = (int)CAN.read() | (aux << 8);         
+        Output = (int)CAN.read();      
+      }   
+  }
   
-
-   if (millis() > ts + 100) {
+  if (millis() > ts + 100) {
        ts = millis();
        update_io();
-       //Serial.println(start_process);
-       //Serial.println(Setpoint+String("  ")+error+String("  ")+state_process+String("  ")+aux+String("  ")+tempH1+String("  ")+tempH2+String("  ")+tempH3+String("  "));  //look for simulation results in plotter
-
        
-       
-
-        // Process transitions
        if(PROCESS.current_state() == Idle && start_process == 1){
           System.trigger_if_possible(process_start);
        }
-       if(PROCESS.current_state() == Filling && stateLevel == 1){      
-          //System.trigger_if_possible(level_H1);
-          
-       }
-       if(PROCESS.current_state() == Heating && cool){
-         //System.trigger_if_possible(heated);
-          
-       }
-       if(PROCESS.current_state() == Cooling && drain_out){
-          //System.trigger_if_possible(cooled);
-       }
-       if(PROCESS.current_state() == Draining && stateLevel == 0 ){
-          //System.trigger_if_possible(level_L1);
-       }
-
-       //Serial.println(String("Current temp state: ") + TEMP.current_state());
-//       if(TEMP.current_state() == 1){
-//           myPID.Compute();      
-//            error = Setpoint - Input;
-//            if(aux/10 < timerMixer){
-//              aux++;
-//              if(abs(error) > 5){
-//                aux = 0; 
-//              }
-//            }
-//            else{
-//              cool = true;
-//            }
-//       }
-//       else if(TEMP.current_state() ==  2){
-//           Setpoint = Setpoint2;
-//            myPID.Compute();     
-//            error = Setpoint - Input;
-//            if(aux/10 < timerMixer){
-//              aux++;
-//              if(abs(error) > 5){
-//                aux = 0; 
-//              }
-//            }
-//            else{
-//              drain_out = true;
-//            }    
-//        
-//       }
-
-       
-   
    }
 
    // Temperature
@@ -418,18 +343,13 @@ void loop () {
    }
 
    // Level
-   //if(level < 10 && stateLevel == 1){
    if(event_received == level_L1 && stateLevel == 1){
-      System.trigger_if_possible(level_L1);
        stateLevel = 0;
    }
    else if(event_received == level_H1 && stateLevel == 0){
-      System.trigger_if_possible(level_H1);   
       stateLevel = 1; 
    }
-
-
-   
+ 
 
    if(start_process){
       digitalWrite(led, HIGH);
