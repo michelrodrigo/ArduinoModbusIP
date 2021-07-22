@@ -58,12 +58,18 @@ void loop() {
     CAN.endPacket();
   }
 
-  int packetSize = CAN.parsePacket();
   
-  int pcktId = CAN.packetId();
-  //Serial.println(String("Tamanho ")+ packetSize + String(" Id ") + pcktId);
-   if (packetSize) {
-    // received a packet
+    if(millis() - ts > 100){
+      ts = millis();
+
+       Serial.println(level + String(" ")+ Input + String(" ") + Output);
+
+       int packetSize = CAN.parsePacket();
+  
+        int pcktId = CAN.packetId();
+      //Serial.println(String("Tamanho ")+ packetSize + String(" Id ") + pcktId);
+       if (packetSize) {
+        // received a packet
     
 
     if(pcktId == 1){
@@ -72,17 +78,13 @@ void loop() {
     else if(pcktId == 2){
       
       level = (int)CAN.read();
-      aux = (int)CAN.read();        
-      Input = (int)CAN.read() | (aux << 8);     
+      aux = CAN.read();        
+      Input = CAN.read() | (aux << 8);     
     
       Output = (int)CAN.read();   
     }
     
     }
-    if(millis() - ts > 100){
-      ts = millis();
-
-       Serial.println(level + String(" ")+ Input + String(" ") + Output);
     }
     
    

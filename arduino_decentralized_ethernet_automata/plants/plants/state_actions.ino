@@ -68,6 +68,7 @@ void PUMP_1_action(){
 
 void TEMP_0_action(){
     Serial.println("TEMP control turned off");
+    Output = 0;
     
     
 }

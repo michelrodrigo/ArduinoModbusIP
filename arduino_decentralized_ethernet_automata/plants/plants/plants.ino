@@ -47,12 +47,15 @@ int tank_level = 0;
 int error = 0;
 int aux = 0;
 int partial_sp = 0; 
+int partial_level = 0;
 int timerMixer = 20; 
 
 int maxLevel = 90;
 int newMaxLevel = 0;
 
 int input, output;
+
+int tempH1, tempH2, tempH3;
 
 int level;
 int levelSensorPin = A0;
@@ -199,12 +202,20 @@ void loop() {
       Serial.println("Novo setpoint recebido") ;
       update_setpoint();
     }
+    else if(packId == 4){//setpoints
+      partial_level = (int)CAN.read();  
+      maxLevel = (int)CAN.read() | (partial_level << 8); 
+      partial_level = (int)CAN.read();  
+      timerMixer = (int)CAN.read() | (partial_level << 8);   
+      Serial.println("Novo limite nível recebido") ;
+      update_level_levels();
+    }
       
       
     }
 
     if(TANK.current_state() == 1){
-      if(level >= 60){
+      if(level >= maxLevel){
          System.trigger(level_H1);
       }      
     }
@@ -257,16 +268,10 @@ void loop() {
         
        CAN.beginPacket(2);
        CAN.write(level);
-       //CAN.endPacket();
-       //Serial.println(level);
-
-       
-       //CAN.beginPacket(3);
+  
        CAN.write(input >> 8);
        CAN.write(input & 0XFF);
-       //CAN.endPacket();
 
-       //CAN.beginPacket(4);
        CAN.write(output);
        CAN.endPacket();
        Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
