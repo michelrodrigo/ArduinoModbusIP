@@ -40,24 +40,37 @@ void VIN_0_action(){
    Serial.println("VIN estado 0");
    digitalWrite(v_in, LOW);
    valve_in = false;
+   CAN.beginPacket(1);
+   CAN.write(close_vin);
+   CAN.endPacket();
 }
 
 void VIN_1_action(){
     Serial.println("VIN estado 1");
     digitalWrite(v_in, HIGH);
     valve_in = true;
+    CAN.beginPacket(1);
+    CAN.write(open_vin);
+    CAN.endPacket();
 }
 
 void VOUT_0_action(){
     Serial.println("VOUT estado 0");
     digitalWrite(v_out, LOW);
     valve_out = false;
+    CAN.beginPacket(1);
+    CAN.write(close_vout);
+    CAN.endPacket();
+    
 }
 
 void VOUT_1_action(){
   Serial.println("VOUT estado 1");
   digitalWrite(v_out, HIGH);
   valve_out = true;
+  CAN.beginPacket(1);
+  CAN.write(open_vout);
+  CAN.endPacket();
 }
 
 void TANK_0_action(){
@@ -81,30 +94,48 @@ void TANK_3_action(){
 void MIXER_0_action(){
     Serial.println("MIXER turned off");
     mixer = false;
+    CAN.beginPacket(1);
+    CAN.write(turn_off_mixer);
+    CAN.endPacket();
 }
 
 void MIXER_1_action(){
   Serial.println("MIXER turned on");
   mixer = true;
+  CAN.beginPacket(1);
+  CAN.write(turn_on_mixer);
+  CAN.endPacket();
 }
 
 void PUMP_0_action(){
     Serial.println("PUMP turned off");
     pump = false;
+    CAN.beginPacket(1);
+    CAN.write(turn_off_pump);
+    CAN.endPacket();
 }
 
 void PUMP_1_action(){
   Serial.println("PUMP turned on");
   pump = true;
+  CAN.beginPacket(1);
+  CAN.write(turn_on_pump);
+  CAN.endPacket();
 }
 
 void TEMP_0_action(){
     Serial.println("TEMP control turned off");
+    CAN.beginPacket(1);
+    CAN.write(turn_off_tcontrol);
+    CAN.endPacket();
     
 }
 
 void TEMP_1_action(){
   Serial.println("TEMP control turned on");
+  CAN.beginPacket(1);
+  CAN.write(turn_on_tcontrol);
+  CAN.endPacket();
  
 }
 

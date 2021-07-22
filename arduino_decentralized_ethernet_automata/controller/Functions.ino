@@ -145,6 +145,21 @@ void build_automata(){
   
 }
 
+int get_event(){
+  int id = CAN.packetId();
+  int received_event;
+  int event;
+  int aux;
+
+  
+   received_event = (int)CAN.read();
+  Serial.println(String("Received event: ") + received_event);
+
+  return received_event;
+
+  
+}
+
 void update_io(){
 
    
@@ -159,6 +174,7 @@ void update_io(){
      if(newSetpoint != Setpoint){
         Setpoint = newSetpoint;
         update_setpoint();
+        
      }
    }
 
@@ -295,6 +311,13 @@ void update_setpoint(){
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+1, value3);
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+2, value2);
   EEPROM.update(TEMP2_SETPOINT_ADDRESS+3, value1);
+
+  CAN.beginPacket(3);
+  CAN.write(Setpoint >> 8);
+  CAN.write(Setpoint & 0XFF);
+  CAN.write(Setpoint2 >> 8);
+  CAN.write(Setpoint2 & 0XFF);
+  CAN.endPacket();
 }
 
 void read_setpoint(){  
@@ -339,7 +362,16 @@ void update_temp_levels(){
   EEPROM.update(TEMP_H3_ADDRESS, aux);
   EEPROM.update(TEMP_H3_ADDRESS+1, value3);
   EEPROM.update(TEMP_H3_ADDRESS+2, value2);
-  EEPROM.update(TEMP_H3_ADDRESS+3, value1);  
+  EEPROM.update(TEMP_H3_ADDRESS+3, value1);
+
+  CAN.beginPacket(5);
+  CAN.write(tempH1 >> 8);
+  CAN.write(tempH1 & 0XFF);
+  CAN.write(tempH2 >> 8);
+  CAN.write(tempH2 & 0XFF);
+  CAN.write(tempH3 >> 8);
+  CAN.write(tempH3 & 0XFF);
+  CAN.endPacket();
 }
 void read_temp_levels(){
   tempH1 = EEPROM.read(TEMP_H1_ADDRESS) + EEPROM.read(TEMP_H1_ADDRESS+1)*10 + EEPROM.read(TEMP_H1_ADDRESS+2)*100 + EEPROM.read(TEMP_H1_ADDRESS+3)*1000; 
@@ -368,7 +400,14 @@ void update_level_levels(){
   EEPROM.update(TIMER_MIXER_ADDRESS, aux);
   EEPROM.update(TIMER_MIXER_ADDRESS+1, value3);
   EEPROM.update(TIMER_MIXER_ADDRESS+2, value2);
-  EEPROM.update(TIMER_MIXER_ADDRESS+3, value1);  
+  EEPROM.update(TIMER_MIXER_ADDRESS+3, value1);
+
+  CAN.beginPacket(4);
+  CAN.write(maxLevel >> 8);
+  CAN.write(maxLevel & 0XFF);
+  CAN.write(timerMixer >> 8);
+  CAN.write(timerMixer & 0XFF);
+  CAN.endPacket();
   
   
 }
