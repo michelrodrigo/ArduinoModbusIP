@@ -20,7 +20,7 @@
 // Objects and Variables --------------------------------------------------
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output, Setpoint2;
+double Setpoint, Input, Output, Setpoint1, Setpoint2;
 //Specify the links and initial tuning parameters
 double Kp=2, Ki=5, Kd=1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -189,7 +189,7 @@ void loop() {
       }
       else if(packId == 3){//setpoints
         partial_sp = (int)CAN.read();  
-        Setpoint = (int)CAN.read() | (partial_sp << 8); 
+        Setpoint1 = (int)CAN.read() | (partial_sp << 8); 
         partial_sp = (int)CAN.read();  
         Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
         Serial.println("Novo setpoint recebido") ;
@@ -221,6 +221,7 @@ void loop() {
    if (millis() > (ts2 + 100)) {
      ts2 = millis();
     if(TEMP.current_state() == 1){
+          Setpoint = Setpoint1;
            myPID.Compute();      
             error = Setpoint - Input;
             if(aux/10 < timerMixer){

@@ -165,9 +165,9 @@ void setup() {
 
 void loop() {
 
-  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
-  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
-  analogWrite(outputPin, Output);
+  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
+  //analogWrite(outputPin, Output);
   
   if (Serial.available()) {
     int input2 = Serial.parseInt();
@@ -185,16 +185,23 @@ void loop() {
   if (packetSize) {
 
       if(packId == 1){
-         System.trigger(get_event(packetSize));
+         //System.trigger(get_event(packetSize));
+         Serial.println(CAN.read());
       }
-      else if(packId == 3){//setpoints
-        partial_sp = (int)CAN.read();  
-        Setpoint = (int)CAN.read() | (partial_sp << 8); 
-        partial_sp = (int)CAN.read();  
-        Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
-        Serial.println("Novo setpoint recebido") ;
-        update_setpoint();
+      else if (packId == 2){
+        level = (int)CAN.read();
+        aux = (int)CAN.read();        
+        Input = (int)CAN.read() | (aux << 8);         
+        Output = (int)CAN.read();      
       }
+//      else if(packId == 3){//setpoints
+//        partial_sp = (int)CAN.read();  
+//        Setpoint = (int)CAN.read() | (partial_sp << 8); 
+//        partial_sp = (int)CAN.read();  
+//        Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
+//        Serial.println("Novo setpoint recebido") ;
+//        update_setpoint();
+//      }
       else if(packId == 4){//high level of level sensor and timer
         partial_level = (int)CAN.read();  
         maxLevel = (int)CAN.read() | (partial_level << 8); 
@@ -202,7 +209,9 @@ void loop() {
         timerMixer = (int)CAN.read() | (partial_level << 8);   
         Serial.println("Novo limite nível recebido") ;
         update_level_levels();
-      }     
+      } 
+
+        
       
   }
 
@@ -218,39 +227,7 @@ void loop() {
     }      
   }
 
-   if (millis() > (ts2 + 100)) {
-     ts2 = millis();
-    if(TEMP.current_state() == 1){
-           myPID.Compute();      
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              System.trigger(heated);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter
-       }
-       else if(TEMP.current_state() ==  2){
-           Setpoint = Setpoint2;
-            myPID.Compute();     
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              System.trigger(cooled);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
-        
-       }
-   }
+   
 
     //updates the continuous time variables
     if (millis() > (ts + 800)) {
@@ -259,20 +236,116 @@ void loop() {
         input = (int)Input;
         output = (int)(Output);
         
-        CAN.beginPacket(2);
-        CAN.write(level);
-  
-        CAN.write(input >> 8);
-        CAN.write(input & 0XFF);
-
-        CAN.write(output);
-        CAN.endPacket();
+//        CAN.beginPacket(2);
+//        CAN.write(level);
+//  
+//        CAN.write(input >> 8);
+//        CAN.write(input & 0XFF);
+//
+//        CAN.write(output);
+//        CAN.endPacket();
 
         //lcd.clear();
         //lcd.print("Level: ");
         //lcd.print(level, DEC);
-       //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
+        Serial.println(level+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
     }
 }
    
+
+void VIN_0_action(){
+   Serial.println("VIN estado 0");
+   digitalWrite(v_in, LOW);
+}
+
+void VIN_1_action(){
+    Serial.println("VIN estado 1");
+    digitalWrite(v_in, HIGH);
+}
+
+void VOUT_0_action(){
+    Serial.println("VOUT estado 0");
+    digitalWrite(v_out, LOW);
     
+}
+
+void VOUT_1_action(){
+  Serial.println("VOUT estado 1");
+  digitalWrite(v_out, HIGH);
+
+}
+
+void TANK_0_action(){
+  Serial.println("esvaziou");
+
+  CAN.beginPacket(1);
+   CAN.write(level_L1);
+   CAN.endPacket();
+ 
+}
+
+void TANK_1_action(){
+    Serial.println("enchendo");
+}
+
+void TANK_2_action(){
+  Serial.println("encheu");
+   
+   CAN.beginPacket(1);
+   CAN.write(level_H1);
+   CAN.endPacket();
+  
+}
+
+void TANK_3_action(){
+    Serial.println("esvaziando");
+}
+
+void MIXER_0_action(){
+    Serial.println("MIXER turned off");
+    
+}
+
+void MIXER_1_action(){
+  Serial.println("MIXER turned on");
+ 
+}
+
+void PUMP_0_action(){
+    Serial.println("PUMP turned off");
+    
+}
+
+void PUMP_1_action(){
+  Serial.println("PUMP turned on");
+  
+}
+
+void TEMP_0_action(){
+    Serial.println("TEMP control turned off");
+    Output = 0;
+    
+    
+}
+
+void TEMP_1_action(){
+  Serial.println("TEMP control turned on");
+  aux = 0;
+}
+
+void TEMP_2_action(){
+    Serial.println("Temp control heated");
+    aux = 0;
+    CAN.beginPacket(1);
+    CAN.write(heated);
+    CAN.endPacket();
+}
+
+void TEMP_3_action(){
+  Serial.println("Temp control cooled");
+  CAN.beginPacket(1);
+  CAN.write(cooled);
+  CAN.endPacket();
+  
+}
+   
