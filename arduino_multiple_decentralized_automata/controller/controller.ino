@@ -319,11 +319,14 @@ void loop () {
         System.trigger_if_possible(get_event()); 
       }
       else if(pcktId == 2){ // continuous variable values
-        level = (int)CAN.read();
+       
         aux = (int)CAN.read();        
         Input = (int)CAN.read() | (aux << 8);         
         Output = (int)CAN.read();      
-      }   
+      }
+      else if(pcktId == 5){
+        level = (int)CAN.read();
+      }
   }
   
   if (millis() > ts + 100) {

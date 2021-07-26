@@ -4,8 +4,8 @@
 #include <CAN.h>
 #include <PID_v1.h>
 #include <EEPROM.h>
-//#include <Wire.h> 
-//#include <LiquidCrystal_I2C.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 
 
 // Constants --------------------------------------------------------------
@@ -25,7 +25,7 @@ double Setpoint, Input, Output, Setpoint2;
 double Kp=2, Ki=5, Kd=1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-//LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 char received_event; // stores the number of the last received event
 
@@ -96,13 +96,7 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 
 // States ---------------------------------------------------------------
 
-// Input valve states
-State VIN_0(&VIN_0_action, NULL, 0);
-State VIN_1(&VIN_1_action, NULL, 1);
 
-// Output valve states
-State VOUT_0(&VOUT_0_action, NULL, 0);
-State VOUT_1(&VOUT_1_action, NULL, 1);
 
 // tank state
 State TANK_0(&TANK_0_action, NULL, 0);
@@ -110,27 +104,11 @@ State TANK_1(&TANK_1_action, NULL, 1);
 State TANK_2(&TANK_2_action, NULL, 2);
 State TANK_3(&TANK_3_action, NULL, 3);
 
-// Mixer states
-State MIXER_0(&MIXER_0_action, NULL, 0);
-State MIXER_1(&MIXER_1_action, NULL, 1);
 
-// Pump states
-State PUMP_0(&PUMP_0_action, NULL, 0);
-State PUMP_1(&PUMP_1_action, NULL, 1);
-
-// Temp states
-State TEMP_0(&TEMP_0_action, NULL, 0);
-State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
 
 // Automata ------------------------------------------------------------
-Automaton VIN(&VIN_0);
-Automaton VOUT(&VOUT_0);
+
 Automaton TANK(&TANK_0);
-Automaton MIXER(&MIXER_0);
-Automaton PUMP(&PUMP_0);
-Automaton TEMP(&TEMP_0);
 
 DES System;
 
@@ -143,8 +121,8 @@ void setup() {
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
 
-  //lcd.init();                      // initialize the lcd 
-  //lcd.backlight();
+  lcd.init();                      // initialize the lcd 
+  lcd.backlight();
   
 
   build_automata();
@@ -165,7 +143,7 @@ void setup() {
 
 void loop() {
 
-  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   //analogWrite(outputPin, Output);
   
@@ -185,11 +163,10 @@ void loop() {
   if (packetSize) {
 
       if(packId == 1){
-         //System.trigger(get_event(packetSize));
-         Serial.println(CAN.read());
+         System.trigger(get_event(packetSize));
+         //Serial.println(CAN.read());
       }
       else if (packId == 2){
-        level = (int)CAN.read();
         aux = (int)CAN.read();        
         Input = (int)CAN.read() | (aux << 8);         
         Output = (int)CAN.read();      
@@ -236,44 +213,28 @@ void loop() {
         input = (int)Input;
         output = (int)(Output);
         
-//        CAN.beginPacket(2);
-//        CAN.write(level);
+        CAN.beginPacket(5);
+        CAN.write(level);
 //  
 //        CAN.write(input >> 8);
 //        CAN.write(input & 0XFF);
 //
 //        CAN.write(output);
-//        CAN.endPacket();
+        CAN.endPacket();
 
-        //lcd.clear();
-        //lcd.print("Level: ");
-        //lcd.print(level, DEC);
+        lcd.clear();
+        lcd.print("L: ");
+        lcd.print(level, DEC);
+        
+        lcd.print("   T: ");
+        lcd.print(input, DEC);
         Serial.println(level+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
     }
 }
    
 
-void VIN_0_action(){
-   Serial.println("VIN estado 0");
-   digitalWrite(v_in, LOW);
-}
 
-void VIN_1_action(){
-    Serial.println("VIN estado 1");
-    digitalWrite(v_in, HIGH);
-}
 
-void VOUT_0_action(){
-    Serial.println("VOUT estado 0");
-    digitalWrite(v_out, LOW);
-    
-}
-
-void VOUT_1_action(){
-  Serial.println("VOUT estado 1");
-  digitalWrite(v_out, HIGH);
-
-}
 
 void TANK_0_action(){
   Serial.println("esvaziou");
@@ -300,52 +261,3 @@ void TANK_2_action(){
 void TANK_3_action(){
     Serial.println("esvaziando");
 }
-
-void MIXER_0_action(){
-    Serial.println("MIXER turned off");
-    
-}
-
-void MIXER_1_action(){
-  Serial.println("MIXER turned on");
- 
-}
-
-void PUMP_0_action(){
-    Serial.println("PUMP turned off");
-    
-}
-
-void PUMP_1_action(){
-  Serial.println("PUMP turned on");
-  
-}
-
-void TEMP_0_action(){
-    Serial.println("TEMP control turned off");
-    Output = 0;
-    
-    
-}
-
-void TEMP_1_action(){
-  Serial.println("TEMP control turned on");
-  aux = 0;
-}
-
-void TEMP_2_action(){
-    Serial.println("Temp control heated");
-    aux = 0;
-    CAN.beginPacket(1);
-    CAN.write(heated);
-    CAN.endPacket();
-}
-
-void TEMP_3_action(){
-  Serial.println("Temp control cooled");
-  CAN.beginPacket(1);
-  CAN.write(cooled);
-  CAN.endPacket();
-  
-}
-   

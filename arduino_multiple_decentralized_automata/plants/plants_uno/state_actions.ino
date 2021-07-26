@@ -23,9 +23,9 @@ void VOUT_1_action(){
 void TANK_0_action(){
   Serial.println("esvaziou");
 
-  CAN.beginPacket(1);
-   CAN.write(level_L1);
-   CAN.endPacket();
+//  CAN.beginPacket(1);
+//   CAN.write(level_L1);
+//   CAN.endPacket();
  
 }
 
@@ -36,9 +36,9 @@ void TANK_1_action(){
 void TANK_2_action(){
   Serial.println("encheu");
    
-   CAN.beginPacket(1);
-   CAN.write(level_H1);
-   CAN.endPacket();
+//   CAN.beginPacket(1);
+//   CAN.write(level_H1);
+//   CAN.endPacket();
   
 }
 

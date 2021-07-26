@@ -165,7 +165,7 @@ void setup() {
 
 void loop() {
 
-  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   analogWrite(outputPin, Output);
   
@@ -207,16 +207,16 @@ void loop() {
   }
 
   
-  if(TANK.current_state() == 1){
-    if(level >= maxLevel){
-       System.trigger(level_H1);
-    }      
-  }
-  else if(TANK.current_state() == 3){
-    if(level <= 5){
-       System.trigger(level_L1);
-    }      
-  }
+//  if(TANK.current_state() == 1){
+//    if(level >= maxLevel){
+//       System.trigger(level_H1);
+//    }      
+//  }
+//  else if(TANK.current_state() == 3){
+//    if(level <= 5){
+//       System.trigger(level_L1);
+//    }      
+//  }
 
    if (millis() > (ts2 + 100)) {
      ts2 = millis();
@@ -261,7 +261,7 @@ void loop() {
         output = (int)(Output);
         
         CAN.beginPacket(2);
-        CAN.write(level);
+        //CAN.write(level);
   
         CAN.write(input >> 8);
         CAN.write(input & 0XFF);
