@@ -28,6 +28,7 @@ int Setpoint, Input, Output, Setpoint2;
 int newSetpoint, newSetpoint2;
 
 ArduinoQueue<int> outcoming_msg(20);
+ArduinoQueue<int> incoming_msg(20);
 
 
 long ts; // stores the time
@@ -321,7 +322,7 @@ void loop () {
   if (packetSize) { //if there is a packet    
 
       if(pcktId == 1){ // events from plant
-        System.trigger_if_possible(get_event()); 
+        incoming_msg.enqueue(get_event()); 
       }
       else if(pcktId == 2){ // continuous variable values
        
@@ -337,7 +338,7 @@ void loop () {
   if (millis() > ts + 100) {
        ts = millis();
        update_io();
-       if(!outcoming_msg.isEmpty()){
+       if(!outcoming_msg.isEmpty() || !incoming_msg.isEmpty()){
           update_communication();
        }
        
@@ -384,10 +385,15 @@ void loop () {
 void update_communication(){
 
   int event_to_send; 
+  int event_to_trigger;
   if(!outcoming_msg.isEmpty()){
     event_to_send = outcoming_msg.dequeue();
     CAN.beginPacket(1);
     CAN.write(event_to_send);
     CAN.endPacket();
+  }
+  if(!incoming_msg.isEmpty()){
+    event_to_trigger = incoming_msg.dequeue();
+    System.trigger_if_possible(event_to_trigger);
   }
 }
