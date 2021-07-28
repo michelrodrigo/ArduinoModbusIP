@@ -36,6 +36,7 @@ int aux = 0;
 int partial_sp = 0; 
 int partial_level = 0;
 int timerMixer = 20; 
+int interval = 1;
 
 int maxLevel = 90;
 int newMaxLevel = 0;
@@ -143,7 +144,7 @@ void setup() {
 
 void loop() {
 
-  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   //analogWrite(outputPin, Output);
   
@@ -194,15 +195,27 @@ void loop() {
 
   
   if(TANK.current_state() == 1){
+    if (millis() > (ts2 + 200)) {
+       ts2 = millis();
+       level += interval;
+    }  
     if(level >= maxLevel){
        System.trigger(level_H1);
     }      
   }
   else if(TANK.current_state() == 3){
+    if (millis() > (ts2 + 200)) {
+       ts2 = millis();
+       level -= interval;
+    }  
     if(level <= 5){
        System.trigger(level_L1);
     }      
   }
+  
+  
+
+  
 
    
 
@@ -221,6 +234,7 @@ void loop() {
 //
 //        CAN.write(output);
         CAN.endPacket();
+        
 
         lcd.clear();
         lcd.print("L: ");
