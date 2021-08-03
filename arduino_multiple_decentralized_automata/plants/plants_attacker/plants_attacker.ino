@@ -10,12 +10,7 @@
   https://github.com/emelianov/modbus-esp8266
 */
 
-#ifdef ESP8266
- #include <ESP8266WiFi.h>
-#else //ESP32
- #include <WiFi.h>
-#endif
-#include <ModbusIP_ESP8266.h>
+
 #include "SCT_plants.h"
 #include <CAN.h>
 
@@ -52,33 +47,16 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define NUM_U_EVENTS 7
 
 //ModbusIP object
-ModbusIP mb;
+//ModbusIP mb;
 
 int a = 0;
-int mixer_command, old_mixer_command = 0;
 
-// Mixer states
-State MIXER_0(&MIXER_0_action, NULL, 0);
-State MIXER_1(&MIXER_1_action, NULL, 1);
 
-Automaton MIXER(&MIXER_0);
 
-DES System;
   
 void setup() {
   Serial.begin(9600);
- 
-  WiFi.begin("Arduino", "redeArduino");
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
- 
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+
 
  Serial.println("CAN Receiver");
   // start the CAN bus at 500 kbps
@@ -92,38 +70,29 @@ void setup() {
 void loop() {
    //Call once inside loop() - all magic here
    int packetSize = CAN.parsePacket();
+   int packId = CAN.packetId();
 
   if (packetSize) {
-    // received a packet
-    Serial.print("Received ");
-
-    if (CAN.packetExtended()) {
-      Serial.print("extended ");
-    }
-
-    if (CAN.packetRtr()) {
-      // Remote transmission request, packet contains no data
-      Serial.print("RTR ");
-    }
-
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
-
-    if (CAN.packetRtr()) {
-      Serial.print(" and requested length ");
-      Serial.println(CAN.packetDlc());
-    } else {
-      Serial.print(" and length ");
-      Serial.println(packetSize);
-
+    if(packId == 1) {
       // only print packet data for non-RTR packets
       while (CAN.available()) {
-        Serial.print((char)CAN.read());
+        Serial.println((int)CAN.read());
       }
-      Serial.println();
     }
 
-    Serial.println();
+  
+    }
+
+   
+ 
+
+  if (Serial.available()) {
+    int input2 = Serial.parseInt();
+
+    CAN.beginPacket(1);
+    CAN.write(input2);
+    CAN.endPacket();
+
   }
   
 }

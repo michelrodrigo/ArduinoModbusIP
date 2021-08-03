@@ -144,7 +144,7 @@ void setup() {
 
 void loop() {
 
-  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   //analogWrite(outputPin, Output);
   
@@ -160,11 +160,15 @@ void loop() {
   // try to parse packet
   int packetSize = CAN.parsePacket();
   int packId = CAN.packetId();
+  int event = 0;
 
   if (packetSize) {
 
       if(packId == 1){
-         System.trigger(get_event(packetSize));
+        event = get_event(packetSize);
+        if ((event % 2) == 1){
+          System.trigger(event);
+        }
          //Serial.println(CAN.read());
       }
       else if (packId == 2){
@@ -195,19 +199,19 @@ void loop() {
 
   
   if(TANK.current_state() == 1){
-    if (millis() > (ts2 + 200)) {
-       ts2 = millis();
-       level += interval;
-    }  
+//    if (millis() > (ts2 + 200)) {
+//       ts2 = millis();
+//       level += interval;
+//    }  
     if(level >= maxLevel){
        System.trigger(level_H1);
     }      
   }
   else if(TANK.current_state() == 3){
-    if (millis() > (ts2 + 200)) {
-       ts2 = millis();
-       level -= interval;
-    }  
+//    if (millis() > (ts2 + 200)) {
+//       ts2 = millis();
+//       level -= interval;
+//    }  
     if(level <= 5){
        System.trigger(level_L1);
     }      
@@ -242,7 +246,7 @@ void loop() {
         
         lcd.print("   T: ");
         lcd.print(input, DEC);
-        Serial.println(level+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
+        //Serial.println(level+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
     }
 }
    
