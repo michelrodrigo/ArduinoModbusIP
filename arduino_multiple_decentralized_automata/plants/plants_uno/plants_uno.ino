@@ -185,7 +185,10 @@ void loop() {
   if (packetSize) {
 
       if(packId == 1){
-         System.trigger(get_event(packetSize));
+        int event = get_event(packetSize);
+        if ((event % 2) == 1){
+          System.trigger(event); 
+        }         
       }
       else if(packId == 3){//setpoints
         partial_sp = (int)CAN.read();  
