@@ -284,7 +284,6 @@ void setup () {
   System.setMode(RANDOM, NULL, NUM_C_EVENTS);
 
   Serial.println("Initializing...");
-  S1.trigger(init); //executes initial event for the supervisor
   S2.trigger(init); //executes initial event for the supervisor
   S3.trigger(init); //executes initial event for the supervisor
   S4.trigger(init);

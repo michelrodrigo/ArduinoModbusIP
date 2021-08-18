@@ -69,7 +69,7 @@ int get_event(int packet_size);
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21};
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
 #define open_vout       controllable_events[2]
@@ -89,9 +89,10 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
 #define process_start   uncontrollable_events[6]
+#define finish          uncontrollable_events[7]
 
 #define NUM_C_EVENTS 11
-#define NUM_U_EVENTS 7
+#define NUM_U_EVENTS 8
 
 
 // States ---------------------------------------------------------------
@@ -104,12 +105,6 @@ State VIN_1(&VIN_1_action, NULL, 1);
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
 
-// tank state
-State TANK_0(&TANK_0_action, NULL, 0);
-State TANK_1(&TANK_1_action, NULL, 1);
-State TANK_2(&TANK_2_action, NULL, 2);
-State TANK_3(&TANK_3_action, NULL, 3);
-
 // Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
 State MIXER_1(&MIXER_1_action, NULL, 1);
@@ -121,13 +116,10 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Temp states
 State TEMP_0(&TEMP_0_action, NULL, 0);
 State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
 
 // Automata ------------------------------------------------------------
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 Automaton TEMP(&TEMP_0);

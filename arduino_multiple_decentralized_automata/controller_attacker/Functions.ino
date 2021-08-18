@@ -122,7 +122,7 @@ void build_automata(){
   S10.add_transition(&S10_1, &S10_0, turn_on_tcontrol, NULL);
   S10.add_transition(&S10_1, &S10_2, close_vin, NULL);
   S10.add_transition(&S10_2, &S10_1, open_vin, NULL);
-  S10.add_transition(&S10_2, &S10_0, turn_on_tconttrol, NULL);
+  S10.add_transition(&S10_2, &S10_0, turn_on_tcontrol, NULL);
 
   Serial.println("S11");
   S11.add_transition(&S11_0, &S11_0, init, NULL); 
@@ -134,7 +134,6 @@ void build_automata(){
   System.add_plant(&PROCESS_SYSTEM);
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
-  System.add_plant(&TANK);
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
   System.add_plant(&TEMP);
