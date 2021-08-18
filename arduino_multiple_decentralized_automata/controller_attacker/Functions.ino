@@ -28,20 +28,21 @@ void build_automata(){
   PROCESS.add_transition(&PROCESS_2, &PROCESS_3, heated, NULL);
   PROCESS.add_transition(&PROCESS_3, &PROCESS_4, cooled, NULL);
   PROCESS.add_transition(&PROCESS_4, &PROCESS_0, level_L1, NULL);
+
+  Serial.println("PROCESS SYSTEM");
+  PROCESS_SYSTEM.add_transition(&PROCESS_IDLE, &PROCESS_PRODUCING, process_start, NULL);
+  PROCESS_SYSTEM.add_transition(&PROCESS_PRODUCING, &PROCESS_IDLE, finish, NULL);
   
   Serial.println("VIN");
   VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
   VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);  
+  VIN.add_transition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);  
   
   Serial.println("VOUT");
   VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
   VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
+  VOUT.add_transition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
   
-  Serial.println("TANK");
-  TANK.add_transition(&TANK_0, &TANK_1, open_vin, NULL);  
-  TANK.add_transition(&TANK_1, &TANK_2, level_H1, NULL);
-  TANK.add_transition(&TANK_2, &TANK_3, open_vout, NULL);
-  TANK.add_transition(&TANK_3, &TANK_0, level_L1, NULL);
 
   Serial.println("MIXER");
   MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
@@ -53,87 +54,91 @@ void build_automata(){
 
   Serial.println("TEMP");
   TEMP.add_transition(&TEMP_0, &TEMP_1, turn_on_tcontrol, NULL);
-  TEMP.add_transition(&TEMP_1, &TEMP_2, heated, NULL);
-  TEMP.add_transition(&TEMP_2, &TEMP_3, cooled, NULL);
-  TEMP.add_transition(&TEMP_3, &TEMP_0, turn_off_tcontrol, NULL);
+  TEMP.add_transition(&TEMP_1, &TEMP_1, heated, &TEMP_heated_action);
+  TEMP.add_transition(&TEMP_1, &TEMP_1, cooled, &TEMP_cooled_action);
+  TEMP.add_transition(&TEMP_1, &TEMP_0, turn_off_tcontrol, NULL);
   
 
   //each supervisor needs a init event that is executed upon initialization. This way
   //the on enter function of the initial state is executed and the enablements/disablements are set 
-  Serial.println("S1");
-  S1.add_transition(&S1_0, &S1_0, init, NULL); 
-  S1.add_transition(&S1_0, &S1_1, level_L1, NULL); 
-  S1.add_transition(&S1_1, &S1_0, close_vout, NULL); 
-  S1.add_transition(&S1_1, &S1_2, open_vin, NULL); 
-  S1.add_transition(&S1_2, &S1_0, close_vout, NULL); 
-  
- 
   Serial.println("S2");
   S2.add_transition(&S2_0, &S2_0, init, NULL); 
-  S2.add_transition(&S2_0, &S2_0, close_vin, NULL);
-  S2.add_transition(&S2_0, &S2_0, open_vout, NULL);
-  S2.add_transition(&S2_0, &S2_0, close_vout, NULL);
-  S2.add_transition(&S2_0, &S2_0, level_L1, NULL);
   S2.add_transition(&S2_0, &S2_1, open_vin, NULL);
-  S2.add_transition(&S2_1, &S2_1, close_vout, NULL);
   S2.add_transition(&S2_1, &S2_0, level_H1, NULL);
 
   Serial.println("S3");
   S3.add_transition(&S3_0, &S3_0, init, NULL); 
-  S3.add_transition(&S3_0, &S3_0, close_vin, NULL);
-  S3.add_transition(&S3_0, &S3_0, open_vin, NULL);
-  S3.add_transition(&S3_0, &S3_0, close_vout, NULL);
-  S3.add_transition(&S3_0, &S3_0, level_H1, NULL);
   S3.add_transition(&S3_0, &S3_1, open_vout, NULL);
-  S3.add_transition(&S3_1, &S3_1, close_vin, NULL);
   S3.add_transition(&S3_1, &S3_0, level_L1, NULL);
-
+  
   Serial.println("S4");
   S4.add_transition(&S4_0, &S4_0, init, NULL); 
   S4.add_transition(&S4_0, &S4_1, process_start, NULL); 
   S4.add_transition(&S4_1, &S4_0, open_vin, NULL); 
-
+  S4.add_transition(&S4_1, &S4_2, finish, NULL); 
+  S4.add_transition(&S4_2, &S4_0, open_vin, NULL); 
+  
   Serial.println("S5");
   S5.add_transition(&S5_0, &S5_0, init, NULL); 
   S5.add_transition(&S5_0, &S5_1, cooled, NULL); 
   S5.add_transition(&S5_1, &S5_0, open_vout, NULL); 
+  S5.add_transition(&S5_1, &S5_2, turn_off_tcontrol, NULL); 
+  S5.add_transition(&S5_2, &S5_1, turn_on_tcontrol, NULL); 
+  S5.add_transition(&S5_2, &S5_0, open_vout, NULL); 
 
   Serial.println("S6");
   S6.add_transition(&S6_0, &S6_0, init, NULL); 
   S6.add_transition(&S6_0, &S6_1, level_H1, NULL); 
-  S6.add_transition(&S6_0, &S6_1, cooled, NULL); 
-  S6.add_transition(&S6_1, &S6_0, cooled, NULL); 
-  S6.add_transition(&S6_1, &S6_0, turn_on_mixer, NULL); 
-  S6.add_transition(&S6_1, &S6_0, turn_off_mixer, NULL); 
-  S6.add_transition(&S6_1, &S6_2, level_L1, NULL); 
-  S6.add_transition(&S6_2, &S6_0, level_H1, NULL); 
+  S6.add_transition(&S6_1, &S6_2, turn_on_mixer, NULL); 
+  S6.add_transition(&S6_2, &S6_0, turn_off_mixer, NULL); 
+  S6.add_transition(&S6_2, &S6_1, level_H1, NULL); 
+  
 
   Serial.println("S7");
   S7.add_transition(&S7_0, &S7_0, init, NULL); 
   S7.add_transition(&S7_0, &S7_1, cooled, NULL); 
-  S7.add_transition(&S7_0, &S7_1, heated, NULL); 
-  S7.add_transition(&S7_1, &S7_0, cooled, NULL);
-  S7.add_transition(&S7_1, &S7_0, turn_on_pump, NULL);
-  S7.add_transition(&S7_1, &S7_0, turn_off_pump, NULL);
-  S7.add_transition(&S7_1, &S7_2, level_L1, NULL);
-  S7.add_transition(&S7_2, &S7_0, heated, NULL);
+  S7.add_transition(&S7_1, &S7_0, turn_off_mixer, NULL);
+  S7.add_transition(&S7_1, &S7_2, turn_off_tcontrol, NULL);
+  S7.add_transition(&S7_2, &S7_1, turn_on_tcontrol, NULL);
+  S7.add_transition(&S7_2, &S7_0, turn_off_mixer, NULL);
 
   Serial.println("S8");
   S8.add_transition(&S8_0, &S8_0, init, NULL); 
-  S8.add_transition(&S8_0, &S8_1, level_H1, NULL); 
-  S8.add_transition(&S8_0, &S8_1, turn_off_tcontrol, NULL); 
-  S8.add_transition(&S8_1, &S8_0, level_H1, NULL); 
-  S8.add_transition(&S8_1, &S8_0, turn_off_tcontrol, NULL); 
-  
+  S8.add_transition(&S8_0, &S8_1, heated, NULL); 
+  S8.add_transition(&S8_1, &S8_2, turn_on_pump, NULL); 
+  S8.add_transition(&S8_2, &S8_1, heated, NULL); 
+  S8.add_transition(&S8_2, &S8_0, turn_off_pump, NULL); 
+
+  Serial.println("S9");
+  S9.add_transition(&S9_0, &S9_0, init, NULL); 
+  S9.add_transition(&S9_0, &S9_1, cooled, NULL); 
+  S9.add_transition(&S9_1, &S9_0, turn_off_pump, NULL); 
+  S9.add_transition(&S9_0, &S9_2, turn_on_pump, NULL); 
+  S9.add_transition(&S9_2, &S9_1, cooled, NULL); 
+
+  Serial.println("S10");
+  S10.add_transition(&S10_0, &S10_0, init, NULL); 
+  S10.add_transition(&S10_0, &S10_1, level_H1, NULL); 
+  S10.add_transition(&S10_1, &S10_0, turn_on_tcontrol, NULL);
+  S10.add_transition(&S10_1, &S10_2, close_vin, NULL);
+  S10.add_transition(&S10_2, &S10_1, open_vin, NULL);
+  S10.add_transition(&S10_2, &S10_0, turn_on_tconttrol, NULL);
+
+  Serial.println("S11");
+  S11.add_transition(&S11_0, &S11_0, init, NULL); 
+  S11.add_transition(&S11_0, &S11_1, turn_on_tcontrol, NULL); 
+  S11.add_transition(&S11_1, &S11_2, heated, NULL); 
+  S11.add_transition(&S11_2, &S11_0, cooled, NULL); 
   
   System.add_plant(&PROCESS);
+  System.add_plant(&PROCESS_SYSTEM);
   System.add_plant(&VIN);
   System.add_plant(&VOUT);
   System.add_plant(&TANK);
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
   System.add_plant(&TEMP);
-  System.add_supervisor(&S1);
+  
   System.add_supervisor(&S2);
   System.add_supervisor(&S3);
   System.add_supervisor(&S4);
@@ -141,6 +146,9 @@ void build_automata(){
   System.add_supervisor(&S6);
   System.add_supervisor(&S7);
   System.add_supervisor(&S8);
+  System.add_supervisor(&S9);
+  System.add_supervisor(&S10);
+  System.add_supervisor(&S11);
   
   
 }

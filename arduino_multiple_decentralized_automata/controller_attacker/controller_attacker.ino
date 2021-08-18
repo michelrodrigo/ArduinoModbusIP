@@ -117,7 +117,7 @@ void build_automata();
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, };
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
 #define open_vout       controllable_events[2]
@@ -137,10 +137,11 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
 #define process_start   uncontrollable_events[6]
+#define finish          uncontrollable_events[7]
 
 
 #define NUM_C_EVENTS 11
-#define NUM_U_EVENTS 7
+#define NUM_U_EVENTS 8
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
 
@@ -148,7 +149,7 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 
 // States ---------------------------------------------------------------
 
-// Process states
+// Process states - it is not a real plant
 State PROCESS_0(&PROCESS_0_action, NULL, 0);
 State PROCESS_1(&PROCESS_1_action, NULL, 1);
 State PROCESS_2(&PROCESS_2_action, NULL, 2);
@@ -160,6 +161,10 @@ State PROCESS_4(&PROCESS_4_action, NULL, 4);
 #define Cooling     3
 #define Draining    4  
 
+// Process model
+State PROCESS_IDLE(&PROCESS_IDLE_action, NULL, 0);
+State PROCESS_PRODUCING(&PROCESS_PRODUCING_action, NULL, 1);
+
 // Input valve states
 State VIN_0(&VIN_0_action, NULL, 0);
 State VIN_1(&VIN_1_action, NULL, 1);
@@ -167,12 +172,6 @@ State VIN_1(&VIN_1_action, NULL, 1);
 // Output valve states
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
-
-// tank state
-State TANK_0(&TANK_0_action, NULL, 0);
-State TANK_1(&TANK_1_action, NULL, 1);
-State TANK_2(&TANK_2_action, NULL, 2);
-State TANK_3(&TANK_3_action, NULL, 3);
 
 // Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
@@ -185,13 +184,6 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Temp states
 State TEMP_0(&TEMP_0_action, NULL, 0);
 State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
-
-// Supervisor of specification E1 - states
-State S1_0(&S1_0_action, NULL, 0);
-State S1_1(&S1_1_action, NULL, 1);
-State S1_2(&S1_2_action, NULL, 2);
 
 // Supervisor of specification E2 - states
 State S2_0(&S2_0_action, NULL, 0);
@@ -204,10 +196,12 @@ State S3_1(&S3_1_action, NULL, 1);
 // Supervisor of specification E4 - states
 State S4_0(&S4_0_action, NULL, 0);
 State S4_1(&S4_1_action, NULL, 1);
+State S4_2(&S4_2_action, NULL, 2);
 
 // Supervisor of specification E5 - states
 State S5_0(&S5_0_action, NULL, 0);
 State S5_1(&S5_1_action, NULL, 1);
+State S5_2(&S5_2_action, NULL, 2);
 
 // Supervisor of specification E6 - states
 State S6_0(&S6_0_action, NULL, 0);
@@ -222,18 +216,32 @@ State S7_2(&S7_2_action, NULL, 2);
 // Supervisor of specification E8 - states
 State S8_0(&S8_0_action, NULL, 0);
 State S8_1(&S8_1_action, NULL, 1);
+State S8_2(&S8_2_action, NULL, 2);
 
+// Supervisor of specification E9 - states
+State S9_0(&S9_0_action, NULL, 0);
+State S9_1(&S9_1_action, NULL, 1);
+State S9_2(&S9_2_action, NULL, 2);
+
+// Supervisor of specification E10 - states
+State S10_0(&S10_0_action, NULL, 0);
+State S10_1(&S10_1_action, NULL, 1);
+State S10_2(&S10_2_action, NULL, 2);
+
+// Supervisor of specification E11 - states
+State S11_0(&S11_0_action, NULL, 0);
+State S11_1(&S11_1_action, NULL, 1);
+State S11_2(&S11_2_action, NULL, 2);
 
 // Automata ------------------------------------------------------------
 Automaton PROCESS(&PROCESS_0);
+Automaton PROCESS_SYSTEM(&PROCESS_IDLE);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 Automaton TEMP(&TEMP_0);
 
-Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
 Supervisor S4(&S4_0);
@@ -241,6 +249,9 @@ Supervisor S5(&S5_0);
 Supervisor S6(&S6_0);
 Supervisor S7(&S7_0);
 Supervisor S8(&S8_0);
+Supervisor S9(&S9_0);
+Supervisor S10(&S10_0);
+Supervisor S11(&S11_0);
 
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 

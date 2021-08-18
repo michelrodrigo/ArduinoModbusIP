@@ -36,6 +36,14 @@ void PROCESS_4_action(){
 }
 
 
+void PROCESS_IDLE_action(){
+  Serial.println("Process in idle state");
+}
+
+void PROCESS_PRODUCING_action(){
+  Serial.println("Process producing");
+}
+
 void VIN_0_action(){
    Serial.println("VIN estado 0");
    digitalWrite(v_in, LOW);
@@ -47,13 +55,17 @@ void VIN_0_action(){
 }
 
 void VIN_1_action(){
-    Serial.println("VIN estado 1");
+    Serial.println("VIN estado 1 - Filling");
     digitalWrite(v_in, HIGH);
     valve_in = true;
 //    CAN.beginPacket(1);
 //    CAN.write(open_vin);
 //    CAN.endPacket();
       outcoming_msg.enqueue(open_vin);
+}
+
+void VIN_level_H1_action(){
+   Serial.println("Full");
 }
 
 void VOUT_0_action(){
@@ -68,7 +80,7 @@ void VOUT_0_action(){
 }
 
 void VOUT_1_action(){
-  Serial.println("VOUT estado 1");
+  Serial.println("VOUT estado 1 - Draining");
   digitalWrite(v_out, HIGH);
   valve_out = true;
 //  CAN.beginPacket(1);
@@ -77,23 +89,10 @@ void VOUT_1_action(){
   outcoming_msg.enqueue(open_vout);
 }
 
-void TANK_0_action(){
-  Serial.println("esvaziou");
- 
+void VOUT_level_L1_action(){
+   Serial.println("Empty");
 }
 
-void TANK_1_action(){
-    Serial.println("enchendo");
-}
-
-void TANK_2_action(){
-  Serial.println("encheu");
-  
-}
-
-void TANK_3_action(){
-    Serial.println("esvaziando");
-}
 
 void MIXER_0_action(){
     Serial.println("MIXER turned off");
@@ -149,35 +148,16 @@ void TEMP_1_action(){
  
 }
 
-void TEMP_2_action(){
+void TEMP_heated_action(){
     Serial.println("Temp control heated");
     
 }
 
-void TEMP_3_action(){
+void TEMP_cooled_action(){
   Serial.println("Temp control cooled");
   
 }
 
-void S1_0_action(){
-    S1.enable(start_process);
-    Serial.println("S1 estado 0: ");
-    
-}
-
-void S1_1_action(){
-    S1.disable(start_process);
-    
-    Serial.println("S1 estado 1: ");
-    //Serial.println(S1.verifica(a2));
-}
-
-void S1_2_action(){
-    S1.enable(start_process);
-    
-    Serial.println("S1 estado 1: ");
-    //Serial.println(S1.verifica(a2));
-}
 
 void S2_0_action(){
     S2.enable(close_vin);
@@ -188,7 +168,7 @@ void S2_0_action(){
 void S2_1_action(){
     S2.disable(close_vin);
     Serial.println("S2 estado 1: ");
-    //Serial.println(S1.verifica(a2));
+    
 }
 
 void S3_0_action(){
@@ -213,6 +193,11 @@ void S4_1_action(){
   S4.enable(open_vin);
 }
 
+void S4_2_action(){
+  Serial.println("S4 estado 2: ");
+  S4.enable(open_vin);
+}
+
 void S5_0_action(){
   Serial.println("S5 estado 0: ");
   S5.disable(open_vout);
@@ -223,46 +208,100 @@ void S5_1_action(){
   S5.enable(open_vout);
 }
 
+void S5_2_action(){
+  Serial.println("S5 estado 2: ");
+  S5.enable(open_vout);
+}
+
 void S6_0_action(){
   Serial.println("S6 estado 0: ");
   S6.disable(turn_on_mixer);
-  S6.disable(turn_off_mixer);
+  
 }
 
 void S6_1_action(){
   Serial.println("S6 estado 1: ");
   S6.enable(turn_on_mixer);
-  S6.enable(turn_off_mixer);
+  
   
 }
 void S6_2_action(){
   Serial.println("S6 estado 2: ");
-  S6.disable(turn_off_mixer);
+  S6.enable(turn_on_mixer);
 }
 
 void S7_0_action(){
   Serial.println("S7 estado 0: ");
-  S7.disable(turn_on_pump);
-  S7.disable(turn_off_pump);
+  S7.disable(turn_off_mixer);
 }
 
 void S7_1_action(){
   Serial.println("S7 estado 1: ");
-  S7.enable(turn_on_pump);
-  S7.enable(turn_off_pump);
+  S7.enable(turn_off_mixer);
+
 }
 
 void S7_2_action(){
   Serial.println("S7 estado 2: ");
-  S7.disable(turn_off_pump);
+  S7.enable(turn_off_mixer);
 }
 
 void S8_0_action(){
   Serial.println("S8 estado 0: ");
-  S8.disable(turn_on_tcontrol);
+  S8.disable(turn_on_pump);
 }
 
 void S8_1_action(){
-  Serial.println("S7 estado 1: ");
-  S8.enable(turn_on_tcontrol);
+  Serial.println("S8 estado 1: ");
+  S8.enable(turn_on_pump);
+}
+
+void S8_2_action(){
+  Serial.println("S8 estado 2: ");
+  S8.enable(turn_on_pump);
+}
+
+void S9_0_action(){
+  Serial.println("S9 estado 0: ");
+  S9.disable(turn_off_pump);
+}
+
+void S9_1_action(){
+  Serial.println("S9 estado 1: ");
+  S9.enable(turn_on_pump);
+}
+
+void S9_2_action(){
+  Serial.println("S9 estado 2: ");
+  S9.disable(turn_off_pump);
+}
+
+void S10_0_action(){
+  Serial.println("S10 estado 0: ");
+  S10.disable(turn_on_tcontrol);
+}
+
+void S10_1_action(){
+  Serial.println("S10 estado 1: ");
+  S10.enable(turn_on_tcontrol);
+}
+
+void S10_2_action(){
+  Serial.println("S10 estado 2: ");
+  S10.enable(turn_on_tcontrol);
+}
+
+void S11_0_action(){
+  Serial.println("S11 estado 0: ");
+  S11.enable(turn_off_tcontrol);
+}
+
+void S11_1_action(){
+  Serial.println("S11 estado 1: ");
+  S11.disable(turn_off_tcontrol);
+}
+
+void S11_2_action(){
+  Serial.println("S11 estado 2: ");
+  S11.disable(turn_off_tcontrol);
 }
