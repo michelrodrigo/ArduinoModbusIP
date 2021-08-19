@@ -1,33 +1,4 @@
-void VIN_0_action(){
-   Serial.println("VIN estado 0");
-   digitalWrite(v_in, LOW);
-}
 
-void VIN_1_action(){
-    Serial.println("VIN estado 1 - Enchendo");
-    digitalWrite(v_in, HIGH);
-}
-
-void VIN_level_H1_action(){
-   Serial.println("Full");
-}
-
-
-void VOUT_0_action(){
-    Serial.println("VOUT estado 0");
-    digitalWrite(v_out, LOW);
-    
-}
-
-void VOUT_1_action(){
-  Serial.println("VOUT estado 1 - Esvaziando");
-  digitalWrite(v_out, HIGH);
-
-}
-
-void VOUT_level_L1_action(){
-   Serial.println("Empty");
-}
 
 
 
@@ -55,6 +26,8 @@ void PUMP_1_action(){
 void TEMP_0_action(){
     Serial.println("TEMP control turned off");
     Output = 0;
+    already_heated = false;
+    already_cooled = false;
     
     
 }
@@ -70,6 +43,7 @@ void TEMP_heated_action(){
     CAN.beginPacket(1);
     CAN.write(heated);
     CAN.endPacket();
+    already_heated = true;
 }
 
 void TEMP_cooled_action(){
@@ -77,5 +51,6 @@ void TEMP_cooled_action(){
   CAN.beginPacket(1);
   CAN.write(cooled);
   CAN.endPacket();
+  already_cooled = true;
   
 }

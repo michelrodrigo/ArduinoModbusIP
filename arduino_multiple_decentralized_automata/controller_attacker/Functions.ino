@@ -22,24 +22,18 @@ void add_modbus_registers(){
 
 void build_automata(){
   //Transition declaration
-  Serial.println("PROCESS");
-  PROCESS.add_transition(&PROCESS_0, &PROCESS_1, process_start, NULL);
-  PROCESS.add_transition(&PROCESS_1, &PROCESS_2, level_H1, NULL);
-  PROCESS.add_transition(&PROCESS_2, &PROCESS_3, heated, NULL);
-  PROCESS.add_transition(&PROCESS_3, &PROCESS_4, cooled, NULL);
-  PROCESS.add_transition(&PROCESS_4, &PROCESS_0, level_L1, NULL);
-
+ 
   Serial.println("PROCESS SYSTEM");
   PROCESS_SYSTEM.add_transition(&PROCESS_IDLE, &PROCESS_PRODUCING, process_start, NULL);
   PROCESS_SYSTEM.add_transition(&PROCESS_PRODUCING, &PROCESS_IDLE, finish, NULL);
   
   Serial.println("VIN");
-  VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
+  VIN.add_transition(&VIN_0, &VIN_1, open_vin, &VIN_open_vin_action);
   VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);  
   VIN.add_transition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);  
   
   Serial.println("VOUT");
-  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
+  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, &VOUT_open_vout_action);
   VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
   VOUT.add_transition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
   
@@ -53,7 +47,7 @@ void build_automata(){
   PUMP.add_transition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
 
   Serial.println("TEMP");
-  TEMP.add_transition(&TEMP_0, &TEMP_1, turn_on_tcontrol, NULL);
+  TEMP.add_transition(&TEMP_0, &TEMP_1, turn_on_tcontrol, &TEMP_turn_on_tcontrol_action);
   TEMP.add_transition(&TEMP_1, &TEMP_1, heated, &TEMP_heated_action);
   TEMP.add_transition(&TEMP_1, &TEMP_1, cooled, &TEMP_cooled_action);
   TEMP.add_transition(&TEMP_1, &TEMP_0, turn_off_tcontrol, NULL);
@@ -130,10 +124,10 @@ void build_automata(){
   S11.add_transition(&S11_1, &S11_2, heated, NULL); 
   S11.add_transition(&S11_2, &S11_0, cooled, NULL); 
   
-  System.add_plant(&PROCESS);
+  //System.add_plant(&PROCESS);
   System.add_plant(&PROCESS_SYSTEM);
   System.add_plant(&VIN);
-  System.add_plant(&VOUT);
+  System.add_plant(&VOUT);  
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
   System.add_plant(&TEMP);

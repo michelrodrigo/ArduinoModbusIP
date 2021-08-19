@@ -1,13 +1,18 @@
 void build_automata(){
 
-  Serial.println("TANK");
-  TANK.add_transition(&TANK_0, &TANK_1, open_vin, NULL);  
-  TANK.add_transition(&TANK_1, &TANK_2, level_H1, NULL);
-  TANK.add_transition(&TANK_2, &TANK_3, open_vout, NULL);
-  TANK.add_transition(&TANK_3, &TANK_0, level_L1, NULL);
+  Serial.println("VIN");
+  VIN.add_transition(&VIN_0, &VIN_1, open_vin, &VIN_open_vin_action);
+  VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);
+  VIN.add_transition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);
+
+  Serial.println("VOUT");
+  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, &VOUT_open_vout_action);
+  VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
+  VOUT.add_transition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
 
   
-  System.add_plant(&TANK);
+  System.add_plant(&VIN);
+  System.add_plant(&VOUT);
   
 
 }

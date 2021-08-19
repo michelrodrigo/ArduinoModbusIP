@@ -38,6 +38,9 @@ void PROCESS_4_action(){
 
 void PROCESS_IDLE_action(){
   Serial.println("Process in idle state");
+  drain_out = false;
+   cool = false; 
+   state_process = 0; 
 }
 
 void PROCESS_PRODUCING_action(){
@@ -48,9 +51,7 @@ void VIN_0_action(){
    Serial.println("VIN estado 0");
    digitalWrite(v_in, LOW);
    valve_in = false;
-//   CAN.beginPacket(1);
-//   CAN.write(close_vin);
-//   CAN.endPacket();
+
   outcoming_msg.enqueue(close_vin);
 }
 
@@ -58,24 +59,27 @@ void VIN_1_action(){
     Serial.println("VIN estado 1 - Filling");
     digitalWrite(v_in, HIGH);
     valve_in = true;
-//    CAN.beginPacket(1);
-//    CAN.write(open_vin);
-//    CAN.endPacket();
-      outcoming_msg.enqueue(open_vin);
+
+      
+      state_process = 1;
 }
 
 void VIN_level_H1_action(){
-   Serial.println("Full");
+  Serial.println("Full");
+}
+
+void VIN_open_vin_action(){
+   outcoming_msg.enqueue(open_vin);
 }
 
 void VOUT_0_action(){
+    outcoming_msg.enqueue(close_vout);
     Serial.println("VOUT estado 0");
     digitalWrite(v_out, LOW);
     valve_out = false;
-//    CAN.beginPacket(1);
-//    CAN.write(close_vout);
-//    CAN.endPacket();
-    outcoming_msg.enqueue(close_vout);
+    
+    
+    System.trigger_if_possible(finish);
     
 }
 
@@ -83,9 +87,11 @@ void VOUT_1_action(){
   Serial.println("VOUT estado 1 - Draining");
   digitalWrite(v_out, HIGH);
   valve_out = true;
-//  CAN.beginPacket(1);
-//  CAN.write(open_vout);
-//  CAN.endPacket();
+  
+  state_process = 4;
+}
+
+void VOUT_open_vout_action(){
   outcoming_msg.enqueue(open_vout);
 }
 
@@ -115,18 +121,14 @@ void MIXER_1_action(){
 void PUMP_0_action(){
     Serial.println("PUMP turned off");
     pump = false;
-//    CAN.beginPacket(1);
-//    CAN.write(turn_off_pump);
-//    CAN.endPacket();
+
     outcoming_msg.enqueue(turn_off_pump);
 }
 
 void PUMP_1_action(){
   Serial.println("PUMP turned on");
   pump = true;
-//  CAN.beginPacket(1);
-//  CAN.write(turn_on_pump);
-//  CAN.endPacket();
+
   outcoming_msg.enqueue(turn_on_pump);
 }
 
@@ -140,16 +142,22 @@ void TEMP_0_action(){
 }
 
 void TEMP_1_action(){
+  
+
+  
+}
+
+void TEMP_turn_on_tcontrol_action(){
   Serial.println("TEMP control turned on");
-//  CAN.beginPacket(1);
-//  CAN.write(turn_on_tcontrol);
-//  CAN.endPacket();
+
     outcoming_msg.enqueue(turn_on_tcontrol);
+    state_process = 2;
  
 }
 
 void TEMP_heated_action(){
     Serial.println("Temp control heated");
+    state_process = 3;
     
 }
 
@@ -258,7 +266,7 @@ void S8_1_action(){
 
 void S8_2_action(){
   Serial.println("S8 estado 2: ");
-  S8.enable(turn_on_pump);
+  S8.disable(turn_on_pump);
 }
 
 void S9_0_action(){
@@ -268,7 +276,7 @@ void S9_0_action(){
 
 void S9_1_action(){
   Serial.println("S9 estado 1: ");
-  S9.enable(turn_on_pump);
+  S9.enable(turn_off_pump);
 }
 
 void S9_2_action(){

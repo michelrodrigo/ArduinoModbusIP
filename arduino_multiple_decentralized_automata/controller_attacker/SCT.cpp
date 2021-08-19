@@ -54,11 +54,11 @@ void Automaton::add_transition(State* state_from, State* state_to, int event,
   m_transitions[m_num_transitions] = transition;
   m_num_transitions++;
   
-  Serial.print("Fs: ");
-  Serial.print(event);
-  Serial.print(1<<state_from->num_state);
+  //Serial.print("Fs: ");
+  //Serial.print(event);
+  //Serial.print(1<<state_from->num_state);
   m_feasibility[event] |= (1<<state_from->num_state);
-  Serial.println(String(" ")+ m_feasibility[event]);
+  //Serial.println(String(" ")+ m_feasibility[event]);
 
 }
 
@@ -184,15 +184,15 @@ bool DES::trigger_if_possible(int event)
 
   for (int i = 0; i < m_num_plants; i++)
   {
-    Serial.print("Is defined: ");
-    Serial.print(m_plants[i]->is_defined(event)+ String(" "));
-    Serial.println();
+    //Serial.print(event + String(" is defined: "));
+    //Serial.print(m_plants[i]->is_defined(event)+ String(" "));
+    //Serial.println();
     if (m_plants[i]->is_defined(event)){
-      Serial.print(" Is feasible: ");
-      Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
-      Serial.println();
+      //Serial.print(" Is feasible: ");
+      //Serial.print(m_plants[i]->is_feasible(event)+ String(" "));
+      //Serial.println();
       if(!m_plants[i]->is_feasible(event)){
-        Serial.println("  Event not possible.");
+        //Serial.println("  Event not possible.");
         return false;
       }
     }
@@ -200,10 +200,10 @@ bool DES::trigger_if_possible(int event)
   
   for (int i = 0; i < m_num_sups; i++)
   {
-    Serial.print("Disabled: ");
-    Serial.println(m_supervisors[i]->is_disabled(event));
+    ////Serial.print("Disabled: ");
+    ////Serial.println(m_supervisors[i]->is_disabled(event));
     if (m_supervisors[i]->is_disabled(event)){
-      Serial.println("Event disabled.");
+      //Serial.println("Event disabled.");
       return false;
     }
   }
@@ -218,13 +218,13 @@ bool DES::trigger_if_possible(int event)
     m_supervisors[i]->trigger(event);
   }
   
-  this->enabledEvents();
+  
   this->updateDES();
-  Serial.print("Enabled events: ");
+  //Serial.print("Enabled events: ");
    for(int i = 0; i < m_num_c_events; i++){
-      Serial.print(enabled_events[i] + String(" "));
+      //Serial.print(enabled_events[i] + String(" "));
    }
-   Serial.println();
+   //Serial.println();
   return true;
 }
 
@@ -267,6 +267,13 @@ void DES::enabledEvents(){
       enabled_events[i] = 0;
     }
   }
+   //Serial.print("Enabled events from enabled events: ");
+  
+   
+ for(int i = 0; i < m_num_c_events; i++){
+    //Serial.print(enabled_events[i] + String(" "));
+ }
+ //Serial.println();
 
 }
 
@@ -277,11 +284,11 @@ void DES::setMode(int mode, int* list, int list_size){
   m_action_list = list;
   m_list_size = list_size;
 
-   Serial.print("Action list: ");
+   //Serial.print("Action list: ");
        for(int i = 0; i < m_list_size; i++){
-          Serial.print(m_action_list[i] + String(" "));
+          //Serial.print(m_action_list[i] + String(" "));
        }
-       Serial.println();
+       //Serial.println();
 
   switch(m_mode){
 
@@ -304,30 +311,30 @@ void DES::updateDES(){
 
   this->enabledEvents();
 
-  Serial.print("Enabled events from update: ");
+  //Serial.print("Enabled events from update: ");
  for(int i = 0; i < m_num_c_events; i++){
-    Serial.print(enabled_events[i] + String(" "));
+    //Serial.print(enabled_events[i] + String(" "));
  }
- Serial.println();
+ //Serial.println();
   switch(m_mode){
 
     case(RANDOM):
       for(int i = 0; i < m_num_c_events; i++){
         if(enabled_events[i] == 1){
           events_to_choose_from[aux] = m_controllable_events[i];
-          Serial.println(String("Enabled event: ") + i);
+          //Serial.println(String("Enabled event: ") + i);
           aux++;
         }
       }
 
-      Serial.print("Events to choose from: ");
+      //Serial.print("Events to choose from: ");
        for(int i = 0; i < aux; i++){
-          Serial.print(events_to_choose_from[i] + String(" "));
+          //Serial.print(events_to_choose_from[i] + String(" "));
        }
-       Serial.println();
+       //Serial.println();
       if(aux > 0){
         m_next_event = random(0, aux);
-        Serial.println(String("Random event: ") + m_next_event);
+        //Serial.println(String("Random event: ") + m_next_event);
         this->trigger_if_possible(events_to_choose_from[m_next_event]);       
       }     
       
@@ -340,13 +347,13 @@ void DES::updateDES(){
     case(LIST)://sequence of events
       
 
-       Serial.print("Action list: ");
+       //Serial.print("Action list: ");
        for(int i = 0; i < m_list_size; i++){
-          Serial.print(m_action_list[i] + String(" "));
+          //Serial.print(m_action_list[i] + String(" "));
        }
-       Serial.println();
-       Serial.println(String("next event") + m_next_event);
-       Serial.println(String("Event: ")+ m_action_list[m_next_event] + String(" is ") +enabled_events[m_next_event]);
+       //Serial.println();
+       //Serial.println(String("next event") + m_next_event);
+       //Serial.println(String("Event: ")+ m_action_list[m_next_event] + String(" is ") +enabled_events[m_next_event]);
       if(enabled_events[m_next_event] == 1){
         for (int i = 0; i < m_num_plants; i++) {
           m_plants[i]->trigger(m_action_list[m_next_event]);
@@ -365,6 +372,6 @@ void DES::updateDES(){
       break;
   }
 
-  this->enabledEvents();
+  //this->enabledEvents();
   
 }

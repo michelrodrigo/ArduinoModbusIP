@@ -27,7 +27,7 @@ ModbusIP mb;
 int Setpoint, Input, Output, Setpoint2;
 int newSetpoint, newSetpoint2;
 
-ArduinoQueue<int> outcoming_msg(20);
+ArduinoQueue<int> outcoming_msg(30);
 ArduinoQueue<int> incoming_msg(20);
 
 
@@ -116,28 +116,28 @@ void build_automata();
 
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, };
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21 };
 int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
-#define open_vin        controllable_events[0]
-#define close_vin       controllable_events[1]
-#define open_vout       controllable_events[2]
-#define close_vout      controllable_events[3]
-#define init            controllable_events[4]
-#define turn_on_mixer   controllable_events[5]
-#define turn_off_mixer  controllable_events[6]
-#define turn_on_pump    controllable_events[7]
-#define turn_off_pump   controllable_events[8]
-#define turn_on_tcontrol  controllable_events[9]
-#define turn_off_tcontrol controllable_events[10]
+#define open_vin        controllable_events[0] // 1
+#define close_vin       controllable_events[1] // 3
+#define open_vout       controllable_events[2] // 5
+#define close_vout      controllable_events[3] // 7
+#define init            controllable_events[4] // 9
+#define turn_on_mixer   controllable_events[5] // 11
+#define turn_off_mixer  controllable_events[6] // 13
+#define turn_on_pump    controllable_events[7] // 15
+#define turn_off_pump   controllable_events[8] // 17
+#define turn_on_tcontrol  controllable_events[9] // 19
+#define turn_off_tcontrol controllable_events[10] // 21
 
-#define level_H1        uncontrollable_events[0]
-#define level_L1        uncontrollable_events[1]
-#define full            uncontrollable_events[2]
-#define heated          uncontrollable_events[3]
-#define cooled          uncontrollable_events[4]
-#define empty           uncontrollable_events[5]
-#define process_start   uncontrollable_events[6]
-#define finish          uncontrollable_events[7]
+#define level_H1        uncontrollable_events[0] // 2
+#define level_L1        uncontrollable_events[1] // 4
+#define full            uncontrollable_events[2] // 6
+#define heated          uncontrollable_events[3] // 8
+#define cooled          uncontrollable_events[4] // 10
+#define empty           uncontrollable_events[5] // 12
+#define process_start   uncontrollable_events[6] // 14
+#define finish          uncontrollable_events[7] // 16
 
 
 #define NUM_C_EVENTS 11
@@ -149,12 +149,6 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
 
 // States ---------------------------------------------------------------
 
-// Process states - it is not a real plant
-State PROCESS_0(&PROCESS_0_action, NULL, 0);
-State PROCESS_1(&PROCESS_1_action, NULL, 1);
-State PROCESS_2(&PROCESS_2_action, NULL, 2);
-State PROCESS_3(&PROCESS_3_action, NULL, 3);
-State PROCESS_4(&PROCESS_4_action, NULL, 4);
 #define Idle        0
 #define Filling     1
 #define Heating     2
@@ -234,7 +228,7 @@ State S11_1(&S11_1_action, NULL, 1);
 State S11_2(&S11_2_action, NULL, 2);
 
 // Automata ------------------------------------------------------------
-Automaton PROCESS(&PROCESS_0);
+
 Automaton PROCESS_SYSTEM(&PROCESS_IDLE);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
@@ -291,6 +285,9 @@ void setup () {
   S6.trigger(init);
   S7.trigger(init);
   S8.trigger(init);
+  S9.trigger(init);
+  S10.trigger(init);
+  S11.trigger(init);
 
   ts = millis();
 
@@ -352,7 +349,7 @@ void loop () {
           update_communication();
        }
        
-       if(PROCESS.current_state() == Idle && start_process == 1){
+       if(PROCESS_SYSTEM.current_state() == Idle && start_process == 1){
           System.trigger_if_possible(process_start);
        }
    }
@@ -405,5 +402,6 @@ void update_communication(){
   if(!incoming_msg.isEmpty()){
     event_to_trigger = incoming_msg.dequeue();
     System.trigger_if_possible(event_to_trigger);
+
   }
 }

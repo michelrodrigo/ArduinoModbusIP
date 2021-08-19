@@ -1,14 +1,6 @@
 void build_automata(){
 
-  Serial.println("VIN");
-  VIN.add_transition(&VIN_0, &VIN_1, open_vin, NULL);
-  VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);
-  VIN.add_transition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);
-
-  Serial.println("VOUT");
-  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, NULL);
-  VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
-  VOUT.add_transition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
+  
 
  
 
@@ -26,8 +18,7 @@ void build_automata(){
   TEMP.add_transition(&TEMP_1, &TEMP_1, cooled, &TEMP_cooled_action);
   TEMP.add_transition(&TEMP_1, &TEMP_0, turn_off_tcontrol, NULL);
 
-  System.add_plant(&VIN);
-  System.add_plant(&VOUT);
+  
   System.add_plant(&MIXER);
   System.add_plant(&PUMP);
   System.add_plant(&TEMP);
