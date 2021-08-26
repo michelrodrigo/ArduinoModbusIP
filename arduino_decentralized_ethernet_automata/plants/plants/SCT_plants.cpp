@@ -14,7 +14,7 @@ Author: Michel Alves - michelrodrigo@ufmg.br
 Created in 22/06/2021
 */
 
-#include "SCT.h"
+#include "SCT_plants.h"
 
 // Struct constructor
 State::State(void (*on_enter)(), void (*on_exit)(), char num_state): 

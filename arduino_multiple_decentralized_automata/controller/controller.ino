@@ -305,6 +305,13 @@ void loop () {
   int packetSize = CAN.parsePacket();
   int pcktId = CAN.packetId();
 
+  if (Serial.available()) {
+    int input2 = Serial.parseInt();
+
+    CAN.beginPacket(1);
+    CAN.write(input2);
+    CAN.endPacket();
+  }
 
   if (packetSize) { //if there is a packet    
 
@@ -312,11 +319,14 @@ void loop () {
         System.trigger_if_possible(get_event()); 
       }
       else if(pcktId == 2){ // continuous variable values
-        level = (int)CAN.read();
+       
         aux = (int)CAN.read();        
         Input = (int)CAN.read() | (aux << 8);         
         Output = (int)CAN.read();      
-      }   
+      }
+      else if(pcktId == 5){
+        level = (int)CAN.read();
+      }
   }
   
   if (millis() > ts + 100) {

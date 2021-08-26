@@ -20,7 +20,7 @@
 // Objects and Variables --------------------------------------------------
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output, Setpoint2;
+double Setpoint, Input, Output, Setpoint1, Setpoint2;
 //Specify the links and initial tuning parameters
 double Kp=2, Ki=5, Kd=1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -36,6 +36,8 @@ int aux = 0;
 int partial_sp = 0; 
 int partial_level = 0;
 int timerMixer = 20; 
+bool already_heated = false;
+bool already_cooled = false;
 
 int maxLevel = 90;
 int newMaxLevel = 0;
@@ -69,7 +71,7 @@ int get_event(int packet_size);
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21};
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
 #define open_vin        controllable_events[0]
 #define close_vin       controllable_events[1]
 #define open_vout       controllable_events[2]
@@ -89,26 +91,15 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
 #define process_start   uncontrollable_events[6]
+#define finish          uncontrollable_events[7]
 
 #define NUM_C_EVENTS 11
-#define NUM_U_EVENTS 7
+#define NUM_U_EVENTS 8
 
 
 // States ---------------------------------------------------------------
 
-// Input valve states
-State VIN_0(&VIN_0_action, NULL, 0);
-State VIN_1(&VIN_1_action, NULL, 1);
 
-// Output valve states
-State VOUT_0(&VOUT_0_action, NULL, 0);
-State VOUT_1(&VOUT_1_action, NULL, 1);
-
-// tank state
-State TANK_0(&TANK_0_action, NULL, 0);
-State TANK_1(&TANK_1_action, NULL, 1);
-State TANK_2(&TANK_2_action, NULL, 2);
-State TANK_3(&TANK_3_action, NULL, 3);
 
 // Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
@@ -121,13 +112,9 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Temp states
 State TEMP_0(&TEMP_0_action, NULL, 0);
 State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
 
 // Automata ------------------------------------------------------------
-Automaton VIN(&VIN_0);
-Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
+
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 Automaton TEMP(&TEMP_0);
@@ -165,7 +152,7 @@ void setup() {
 
 void loop() {
 
-  level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
+  //level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
   Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
   analogWrite(outputPin, Output);
   
@@ -185,11 +172,14 @@ void loop() {
   if (packetSize) {
 
       if(packId == 1){
-         System.trigger(get_event(packetSize));
+        int event = get_event(packetSize);
+        if ((event % 2) == 1){
+          System.trigger(event); 
+        }         
       }
       else if(packId == 3){//setpoints
         partial_sp = (int)CAN.read();  
-        Setpoint = (int)CAN.read() | (partial_sp << 8); 
+        Setpoint1 = (int)CAN.read() | (partial_sp << 8); 
         partial_sp = (int)CAN.read();  
         Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
         Serial.println("Novo setpoint recebido") ;
@@ -207,20 +197,21 @@ void loop() {
   }
 
   
-  if(TANK.current_state() == 1){
-    if(level >= maxLevel){
-       System.trigger(level_H1);
-    }      
-  }
-  else if(TANK.current_state() == 3){
-    if(level <= 5){
-       System.trigger(level_L1);
-    }      
-  }
+//  if(TANK.current_state() == 1){
+//    if(level >= maxLevel){
+//       System.trigger(level_H1);
+//    }      
+//  }
+//  else if(TANK.current_state() == 3){
+//    if(level <= 5){
+//       System.trigger(level_L1);
+//    }      
+//  }
 
    if (millis() > (ts2 + 100)) {
      ts2 = millis();
-    if(TEMP.current_state() == 1){
+    if(TEMP.current_state() == 1 && !already_heated){
+          Setpoint = Setpoint1;
            myPID.Compute();      
             error = Setpoint - Input;
             if(aux/10 < timerMixer){
@@ -234,7 +225,7 @@ void loop() {
             }
             //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter
        }
-       else if(TEMP.current_state() ==  2){
+       else if(TEMP.current_state() ==  1 && already_heated){
            Setpoint = Setpoint2;
             myPID.Compute();     
             error = Setpoint - Input;
@@ -260,7 +251,7 @@ void loop() {
         output = (int)(Output);
         
         CAN.beginPacket(2);
-        CAN.write(level);
+        //CAN.write(level);
   
         CAN.write(input >> 8);
         CAN.write(input & 0XFF);

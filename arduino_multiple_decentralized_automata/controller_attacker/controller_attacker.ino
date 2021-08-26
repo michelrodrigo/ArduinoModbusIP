@@ -7,6 +7,7 @@
 #include <EEPROM.h>
 #include "SCT.h"
 #include <CAN.h>
+#include <ArduinoQueue.h>
 
 // Constants --------------------------------------------------------------
 
@@ -25,6 +26,10 @@ ModbusIP mb;
 //Define Variables we'll be connecting to
 int Setpoint, Input, Output, Setpoint2;
 int newSetpoint, newSetpoint2;
+
+ArduinoQueue<int> outcoming_msg(30);
+ArduinoQueue<int> incoming_msg(20);
+
 
 long ts; // stores the time
 
@@ -109,33 +114,89 @@ void read_level_levels();
 void add_modbus_registers();
 void build_automata();
 
+void PROCESS_IDLE_action();
+void PROCESS_PRODUCING_action();
+void VIN_0_action();
+void VIN_1_action();
+void VIN_level_H1_action();
+void VIN_open_vin_action();
+void VIN_close_vin_action();
+void VOUT_0_action();
+void VOUT_1_action();
+void VOUT_open_vout_action();
+void VOUT_close_vout_action();
+void VOUT_level_L1_action();
+void MIXER_0_action();
+void MIXER_1_action();
+void MIXER_turn_on_action();
+void PUMP_0_action();
+void PUMP_1_action();
+void PUMP_turn_on_action();
+void PUMP_turn_off_action();
+void TEMP_0_action();
+void TEMP_1_action();
+void TEMP_turn_on_tcontrol_action();
+void TEMP_turn_off_tcontrol_action();
+void TEMP_heated_action();
+void TEMP_cooled_action();
+void S2_0_action();
+void S2_1_action();
+void S3_0_action();
+void S3_1_action();
+void S4_0_action();
+void S4_1_action();
+void S4_2_action();
+void S5_0_action();
+void S5_1_action();
+void S5_2_action();
+void S6_0_action();
+void S6_1_action();
+void S6_2_action();
+void S7_0_action();
+void S7_1_action();
+void S7_2_action();
+void S8_0_action();
+void S8_1_action();
+void S8_2_action();
+void S9_0_action();
+void S9_1_action();
+void S9_2_action();
+void S10_0_action();
+void S10_1_action();
+void S10_2_action();
+void S11_0_action();
+void S11_1_action();
+void S11_2_action();
+
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, };
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
-#define open_vin        controllable_events[0]
-#define close_vin       controllable_events[1]
-#define open_vout       controllable_events[2]
-#define close_vout      controllable_events[3]
-#define init            controllable_events[4]
-#define turn_on_mixer   controllable_events[5]
-#define turn_off_mixer  controllable_events[6]
-#define turn_on_pump    controllable_events[7]
-#define turn_off_pump   controllable_events[8]
-#define turn_on_tcontrol  controllable_events[9]
-#define turn_off_tcontrol controllable_events[10]
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21 };
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
+#define open_vin        controllable_events[0] // 1
+#define close_vin       controllable_events[1] // 3
+#define open_vout       controllable_events[2] // 5
+#define close_vout      controllable_events[3] // 7
+#define init            controllable_events[4] // 9
+#define turn_on_mixer   controllable_events[5] // 11
+#define turn_off_mixer  controllable_events[6] // 13
+#define turn_on_pump    controllable_events[7] // 15
+#define turn_off_pump   controllable_events[8] // 17
+#define turn_on_tcontrol  controllable_events[9] // 19
+#define turn_off_tcontrol controllable_events[10] // 21
 
-#define level_H1        uncontrollable_events[0]
-#define level_L1        uncontrollable_events[1]
-#define full            uncontrollable_events[2]
-#define heated          uncontrollable_events[3]
-#define cooled          uncontrollable_events[4]
-#define empty           uncontrollable_events[5]
-#define process_start   uncontrollable_events[6]
+#define level_H1        uncontrollable_events[0] // 2
+#define level_L1        uncontrollable_events[1] // 4
+#define reset           uncontrollable_events[2] // 6
+#define heated          uncontrollable_events[3] // 8
+#define cooled          uncontrollable_events[4] // 10
+#define empty           uncontrollable_events[5] // 12
+#define process_start   uncontrollable_events[6] // 14
+#define finish          uncontrollable_events[7] // 16
+
 
 
 #define NUM_C_EVENTS 11
-#define NUM_U_EVENTS 7
+#define NUM_U_EVENTS 8
 
  int list[]={open_vin, close_vin, open_vout, close_vout};
 
@@ -143,17 +204,15 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 
 // States ---------------------------------------------------------------
 
-// Process states
-State PROCESS_0(&PROCESS_0_action, NULL, 0);
-State PROCESS_1(&PROCESS_1_action, NULL, 1);
-State PROCESS_2(&PROCESS_2_action, NULL, 2);
-State PROCESS_3(&PROCESS_3_action, NULL, 3);
-State PROCESS_4(&PROCESS_4_action, NULL, 4);
 #define Idle        0
 #define Filling     1
 #define Heating     2
 #define Cooling     3
 #define Draining    4  
+
+// Process model
+State PROCESS_IDLE(&PROCESS_IDLE_action, NULL, 0);
+State PROCESS_PRODUCING(&PROCESS_PRODUCING_action, NULL, 1);
 
 // Input valve states
 State VIN_0(&VIN_0_action, NULL, 0);
@@ -162,12 +221,6 @@ State VIN_1(&VIN_1_action, NULL, 1);
 // Output valve states
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
-
-// tank state
-State TANK_0(&TANK_0_action, NULL, 0);
-State TANK_1(&TANK_1_action, NULL, 1);
-State TANK_2(&TANK_2_action, NULL, 2);
-State TANK_3(&TANK_3_action, NULL, 3);
 
 // Mixer states
 State MIXER_0(&MIXER_0_action, NULL, 0);
@@ -180,13 +233,6 @@ State PUMP_1(&PUMP_1_action, NULL, 1);
 // Temp states
 State TEMP_0(&TEMP_0_action, NULL, 0);
 State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
-
-// Supervisor of specification E1 - states
-State S1_0(&S1_0_action, NULL, 0);
-State S1_1(&S1_1_action, NULL, 1);
-State S1_2(&S1_2_action, NULL, 2);
 
 // Supervisor of specification E2 - states
 State S2_0(&S2_0_action, NULL, 0);
@@ -199,10 +245,12 @@ State S3_1(&S3_1_action, NULL, 1);
 // Supervisor of specification E4 - states
 State S4_0(&S4_0_action, NULL, 0);
 State S4_1(&S4_1_action, NULL, 1);
+State S4_2(&S4_2_action, NULL, 2);
 
 // Supervisor of specification E5 - states
 State S5_0(&S5_0_action, NULL, 0);
 State S5_1(&S5_1_action, NULL, 1);
+State S5_2(&S5_2_action, NULL, 2);
 
 // Supervisor of specification E6 - states
 State S6_0(&S6_0_action, NULL, 0);
@@ -217,18 +265,32 @@ State S7_2(&S7_2_action, NULL, 2);
 // Supervisor of specification E8 - states
 State S8_0(&S8_0_action, NULL, 0);
 State S8_1(&S8_1_action, NULL, 1);
+State S8_2(&S8_2_action, NULL, 2);
 
+// Supervisor of specification E9 - states
+State S9_0(&S9_0_action, NULL, 0);
+State S9_1(&S9_1_action, NULL, 1);
+State S9_2(&S9_2_action, NULL, 2);
+
+// Supervisor of specification E10 - states
+State S10_0(&S10_0_action, NULL, 0);
+State S10_1(&S10_1_action, NULL, 1);
+State S10_2(&S10_2_action, NULL, 2);
+
+// Supervisor of specification E11 - states
+State S11_0(&S11_0_action, NULL, 0);
+State S11_1(&S11_1_action, NULL, 1);
+State S11_2(&S11_2_action, NULL, 2);
 
 // Automata ------------------------------------------------------------
-Automaton PROCESS(&PROCESS_0);
+
+Automaton PROCESS_SYSTEM(&PROCESS_IDLE);
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
 Automaton MIXER(&MIXER_0);
 Automaton PUMP(&PUMP_0);
 Automaton TEMP(&TEMP_0);
 
-Supervisor S1(&S1_0);
 Supervisor S2(&S2_0);
 Supervisor S3(&S3_0);
 Supervisor S4(&S4_0);
@@ -236,6 +298,9 @@ Supervisor S5(&S5_0);
 Supervisor S6(&S6_0);
 Supervisor S7(&S7_0);
 Supervisor S8(&S8_0);
+Supervisor S9(&S9_0);
+Supervisor S10(&S10_0);
+Supervisor S11(&S11_0);
 
 DES System(controllable_events, NUM_C_EVENTS, uncontrollable_events, NUM_U_EVENTS);
 
@@ -268,7 +333,6 @@ void setup () {
   System.setMode(RANDOM, NULL, NUM_C_EVENTS);
 
   Serial.println("Initializing...");
-  S1.trigger(init); //executes initial event for the supervisor
   S2.trigger(init); //executes initial event for the supervisor
   S3.trigger(init); //executes initial event for the supervisor
   S4.trigger(init);
@@ -276,6 +340,9 @@ void setup () {
   S6.trigger(init);
   S7.trigger(init);
   S8.trigger(init);
+  S9.trigger(init);
+  S10.trigger(init);
+  S11.trigger(init);
 
   ts = millis();
 
@@ -305,26 +372,40 @@ void loop () {
   int packetSize = CAN.parsePacket();
   int pcktId = CAN.packetId();
 
+  if (Serial.available()) {
+    int input2 = Serial.parseInt();
+
+//    CAN.beginPacket(1);
+//    CAN.write(input2);
+//    CAN.endPacket();
+    outcoming_msg.enqueue(input2);
+  }
 
   if (packetSize) { //if there is a packet    
 
       if(pcktId == 1){ // events from plant
-        System.trigger_if_possible(get_event()); 
+        incoming_msg.enqueue(get_event()); 
       }
       else if(pcktId == 2){ // continuous variable values
-        level = (int)CAN.read();
+       
         aux = (int)CAN.read();        
         Input = (int)CAN.read() | (aux << 8);         
         Output = (int)CAN.read();      
-      }   
+      }
+      else if(pcktId == 5){
+        level = (int)CAN.read();
+      }
   }
   
   if (millis() > ts + 100) {
        ts = millis();
        update_io();
+       if(!outcoming_msg.isEmpty() || !incoming_msg.isEmpty()){
+          update_communication();
+       }
        
-       if(PROCESS.current_state() == Idle && start_process == 1){
-          System.trigger_if_possible(process_start);
+       if(PROCESS_SYSTEM.currentState() == Idle && start_process == 1){
+          System.triggerIfPossible(process_start);
        }
    }
 
@@ -358,8 +439,24 @@ void loop () {
       digitalWrite(led, LOW);
    }
 
-   
   
 
    
+}
+
+void update_communication(){
+
+  int event_to_send; 
+  int event_to_trigger;
+  if(!outcoming_msg.isEmpty()){
+    event_to_send = outcoming_msg.dequeue();
+    CAN.beginPacket(1);
+    CAN.write(event_to_send);
+    CAN.endPacket();
+  }
+  if(!incoming_msg.isEmpty()){
+    event_to_trigger = incoming_msg.dequeue();
+    System.triggerIfPossible(event_to_trigger);
+
+  }
 }

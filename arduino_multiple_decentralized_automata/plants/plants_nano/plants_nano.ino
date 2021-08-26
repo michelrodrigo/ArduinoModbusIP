@@ -4,8 +4,8 @@
 #include <CAN.h>
 #include <PID_v1.h>
 #include <EEPROM.h>
-//#include <Wire.h> 
-//#include <LiquidCrystal_I2C.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 
 
 // Constants --------------------------------------------------------------
@@ -25,7 +25,7 @@ double Setpoint, Input, Output, Setpoint2;
 double Kp=2, Ki=5, Kd=1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-//LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 char received_event; // stores the number of the last received event
 
@@ -36,6 +36,10 @@ int aux = 0;
 int partial_sp = 0; 
 int partial_level = 0;
 int timerMixer = 20; 
+int interval = 1;
+
+bool level_H1_updated = false;
+bool level_L1_updated = false;
 
 int maxLevel = 90;
 int newMaxLevel = 0;
@@ -66,6 +70,18 @@ int levelSensorPin = A0;
 void build_automata();
 int get_event(int packet_size);
 
+void VIN_0_action();
+void VIN_1_action();
+void VIN_level_H1_action();
+void VIN_open_vin_action();
+void VOUT_0_action();
+void VOUT_1_action();
+void VOUT_level_L1_action();
+void VOUT_open_vout_action();
+void read_setpoint();
+void read_level_levels();
+void update_level_levels();
+
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21};
@@ -89,9 +105,10 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 #define cooled          uncontrollable_events[4]
 #define empty           uncontrollable_events[5]
 #define process_start   uncontrollable_events[6]
+#define finish          uncontrollable_events[7]
 
 #define NUM_C_EVENTS 11
-#define NUM_U_EVENTS 7
+#define NUM_U_EVENTS 8
 
 
 // States ---------------------------------------------------------------
@@ -104,33 +121,11 @@ State VIN_1(&VIN_1_action, NULL, 1);
 State VOUT_0(&VOUT_0_action, NULL, 0);
 State VOUT_1(&VOUT_1_action, NULL, 1);
 
-// tank state
-State TANK_0(&TANK_0_action, NULL, 0);
-State TANK_1(&TANK_1_action, NULL, 1);
-State TANK_2(&TANK_2_action, NULL, 2);
-State TANK_3(&TANK_3_action, NULL, 3);
 
-// Mixer states
-State MIXER_0(&MIXER_0_action, NULL, 0);
-State MIXER_1(&MIXER_1_action, NULL, 1);
-
-// Pump states
-State PUMP_0(&PUMP_0_action, NULL, 0);
-State PUMP_1(&PUMP_1_action, NULL, 1);
-
-// Temp states
-State TEMP_0(&TEMP_0_action, NULL, 0);
-State TEMP_1(&TEMP_1_action, NULL, 1);
-State TEMP_2(&TEMP_2_action, NULL, 2);
-State TEMP_3(&TEMP_3_action, NULL, 3);
 
 // Automata ------------------------------------------------------------
 Automaton VIN(&VIN_0);
 Automaton VOUT(&VOUT_0);
-Automaton TANK(&TANK_0);
-Automaton MIXER(&MIXER_0);
-Automaton PUMP(&PUMP_0);
-Automaton TEMP(&TEMP_0);
 
 DES System;
 
@@ -143,8 +138,8 @@ void setup() {
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
 
-  //lcd.init();                      // initialize the lcd 
-  //lcd.backlight();
+  lcd.init();                      // initialize the lcd 
+  lcd.backlight();
   
 
   build_automata();
@@ -166,8 +161,8 @@ void setup() {
 void loop() {
 
   level = map(analogRead(levelSensorPin), 0, 1023, 0, 100);
-  Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
-  analogWrite(outputPin, Output);
+  //Input = map(analogRead(sensorPin), 0, 1023, MIN_TEMP, MAX_TEMP);  // Read the value from the sensor
+  //analogWrite(outputPin, Output);
   
   if (Serial.available()) {
     int input2 = Serial.parseInt();
@@ -181,20 +176,30 @@ void loop() {
   // try to parse packet
   int packetSize = CAN.parsePacket();
   int packId = CAN.packetId();
+  int event = 0;
 
   if (packetSize) {
 
       if(packId == 1){
-         System.trigger(get_event(packetSize));
+        event = get_event(packetSize);
+        if ((event % 2) == 1){
+          System.trigger(event);
+        }
+         //Serial.println(CAN.read());
       }
-      else if(packId == 3){//setpoints
-        partial_sp = (int)CAN.read();  
-        Setpoint = (int)CAN.read() | (partial_sp << 8); 
-        partial_sp = (int)CAN.read();  
-        Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
-        Serial.println("Novo setpoint recebido") ;
-        update_setpoint();
+      else if (packId == 2){
+        aux = (int)CAN.read();        
+        Input = (int)CAN.read() | (aux << 8);         
+        Output = (int)CAN.read();      
       }
+//      else if(packId == 3){//setpoints
+//        partial_sp = (int)CAN.read();  
+//        Setpoint = (int)CAN.read() | (partial_sp << 8); 
+//        partial_sp = (int)CAN.read();  
+//        Setpoint2 = (int)CAN.read() | (partial_sp << 8);   
+//        Serial.println("Novo setpoint recebido") ;
+//        update_setpoint();
+//      }
       else if(packId == 4){//high level of level sensor and timer
         partial_level = (int)CAN.read();  
         maxLevel = (int)CAN.read() | (partial_level << 8); 
@@ -202,55 +207,42 @@ void loop() {
         timerMixer = (int)CAN.read() | (partial_level << 8);   
         Serial.println("Novo limite nível recebido") ;
         update_level_levels();
-      }     
+      } 
+
+        
       
   }
 
   
-  if(TANK.current_state() == 1){
-    if(level >= maxLevel){
+ 
+    if(level >= maxLevel && !level_H1_updated){
        System.trigger(level_H1);
+       level_H1_updated = true;
     }      
-  }
-  else if(TANK.current_state() == 3){
-    if(level <= 5){
+  
+   
+//    if (millis() > (ts2 + 200)) {
+//       ts2 = millis();
+//       level -= interval;
+//    }  
+    if(level <= 5 && !level_L1_updated){
        System.trigger(level_L1);
-    }      
-  }
+       level_L1_updated = true;
+    }    
 
-   if (millis() > (ts2 + 100)) {
-     ts2 = millis();
-    if(TEMP.current_state() == 1){
-           myPID.Compute();      
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              System.trigger(heated);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter
-       }
-       else if(TEMP.current_state() ==  2){
-           Setpoint = Setpoint2;
-            myPID.Compute();     
-            error = Setpoint - Input;
-            if(aux/10 < timerMixer){
-              aux++;
-              if(abs(error) > 5){
-                aux = 0; 
-              }
-            }
-            else{
-              System.trigger(cooled);
-            }
-            //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
-        
-       }
-   }
+      if(level > 10){
+        level_L1_updated = false;
+      }
+      if(level < maxLevel-5) { 
+        level_H1_updated = false;
+      }
+  
+  
+  
+
+  
+
+   
 
     //updates the continuous time variables
     if (millis() > (ts + 800)) {
@@ -259,20 +251,23 @@ void loop() {
         input = (int)Input;
         output = (int)(Output);
         
-        CAN.beginPacket(2);
+        CAN.beginPacket(5);
         CAN.write(level);
-  
-        CAN.write(input >> 8);
-        CAN.write(input & 0XFF);
-
-        CAN.write(output);
+//  
+//        CAN.write(input >> 8);
+//        CAN.write(input & 0XFF);
+//
+//        CAN.write(output);
         CAN.endPacket();
+        
 
-        //lcd.clear();
-        //lcd.print("Level: ");
-        //lcd.print(level, DEC);
-       //Serial.println(Setpoint+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
+        lcd.clear();
+        lcd.print("L: ");
+        lcd.print(level, DEC);
+        
+        lcd.print("   T: ");
+        lcd.print(input, DEC);
+        //Serial.println(level+String("  ")+input+String("  ")+output+String("  "));  //look for simulation results in plotter    
     }
 }
    
-    
