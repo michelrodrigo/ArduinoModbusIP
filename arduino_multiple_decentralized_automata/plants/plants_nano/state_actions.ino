@@ -5,6 +5,7 @@ void VIN_0_action(){
 
 void VIN_1_action(){
     digitalWrite(v_in, HIGH);
+    Serial.println("VIN estado 1 - Enchendo");
 }
 
 void VIN_level_H1_action(){
@@ -15,10 +16,6 @@ void VIN_level_H1_action(){
    
 }
 
-void VIN_open_vin_action(){
-  Serial.println("VIN estado 1 - Enchendo");
- 
-}
 
 
 void VOUT_0_action(){
@@ -28,7 +25,7 @@ void VOUT_0_action(){
 }
 
 void VOUT_1_action(){
- 
+  Serial.println("VOUT estado 1 - Esvaziando");
   digitalWrite(v_out, HIGH);
 
 }
@@ -38,8 +35,4 @@ void VOUT_level_L1_action(){
    CAN.beginPacket(1);
    CAN.write(level_L1);
    CAN.endPacket();
-}
-
-void VOUT_open_vout_action(){
-   Serial.println("VOUT estado 1 - Esvaziando");
 }

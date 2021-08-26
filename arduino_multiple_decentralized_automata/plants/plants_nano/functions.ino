@@ -1,14 +1,18 @@
 void build_automata(){
 
   Serial.println("VIN");
-  VIN.add_transition(&VIN_0, &VIN_1, open_vin, &VIN_open_vin_action);
-  VIN.add_transition(&VIN_1, &VIN_0, close_vin, NULL);
-  VIN.add_transition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);
-
+  VIN.addTransition(&VIN_0, &VIN_1, open_vin, NULL);
+  VIN.addTransition(&VIN_1, &VIN_0, close_vin, NULL);  
+  VIN.addTransition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);  
+  VIN.addTransition(&VIN_1, &VIN_0, reset, NULL);
+  VIN.addTransition(&VIN_0, &VIN_0, reset, NULL);
+  
   Serial.println("VOUT");
-  VOUT.add_transition(&VOUT_0, &VOUT_1, open_vout, &VOUT_open_vout_action);
-  VOUT.add_transition(&VOUT_1, &VOUT_0, close_vout, NULL);
-  VOUT.add_transition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
+  VOUT.addTransition(&VOUT_0, &VOUT_1, open_vout, NULL);
+  VOUT.addTransition(&VOUT_1, &VOUT_0, close_vout, NULL);
+  VOUT.addTransition(&VOUT_1, &VOUT_1, level_L1, &VOUT_level_L1_action);
+  VOUT.addTransition(&VOUT_1, &VOUT_0, reset, NULL);
+  VOUT.addTransition(&VOUT_0, &VOUT_0, reset, NULL);
 
   
   System.add_plant(&VIN);
@@ -31,9 +35,7 @@ int get_event(int packet_size){
 
   
    received_event = (int)CAN.read();
-   digitalWrite(v_out, HIGH);
-   delay(100);
-   digitalWrite(v_out, LOW);
+ 
   Serial.println(String("Received event: ") + received_event);
 
   return received_event;

@@ -52,10 +52,9 @@ int tempH1, tempH2, tempH3;
 // Pins --------------------------------------------------------------
 int v_in = 2; //input valve
 int v_out = 3; //output valve
-int outputPin   = 5;    // The pin the digital output PMW is connected to
-int sensorPin   = A1;   // The pin the analog sensor is connected to
 int levelSensorPin = A0;
 
+int led = 13;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -84,28 +83,30 @@ void update_level_levels();
 
 
 // Events ---------------------------------------------------------------
-int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21};
-int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
-#define open_vin        controllable_events[0]
-#define close_vin       controllable_events[1]
-#define open_vout       controllable_events[2]
-#define close_vout      controllable_events[3]
-#define init_system     controllable_events[4]
-#define turn_on_mixer   controllable_events[5]
-#define turn_off_mixer  controllable_events[6]
-#define turn_on_pump    controllable_events[7]
-#define turn_off_pump   controllable_events[8]
-#define turn_on_tcontrol  controllable_events[9]
-#define turn_off_tcontrol controllable_events[10]
+int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21 };
+int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
+#define open_vin        controllable_events[0] // 1
+#define close_vin       controllable_events[1] // 3
+#define open_vout       controllable_events[2] // 5
+#define close_vout      controllable_events[3] // 7
+#define init_system     controllable_events[4] // 9
+#define turn_on_mixer   controllable_events[5] // 11
+#define turn_off_mixer  controllable_events[6] // 13
+#define turn_on_pump    controllable_events[7] // 15
+#define turn_off_pump   controllable_events[8] // 17
+#define turn_on_tcontrol  controllable_events[9] // 19
+#define turn_off_tcontrol controllable_events[10] // 21
 
-#define level_H1        uncontrollable_events[0]
-#define level_L1        uncontrollable_events[1]
-#define full            uncontrollable_events[2]
-#define heated          uncontrollable_events[3]
-#define cooled          uncontrollable_events[4]
-#define empty           uncontrollable_events[5]
-#define process_start   uncontrollable_events[6]
-#define finish          uncontrollable_events[7]
+#define level_H1        uncontrollable_events[0] // 2
+#define level_L1        uncontrollable_events[1] // 4
+#define reset           uncontrollable_events[2] // 6
+#define heated          uncontrollable_events[3] // 8
+#define cooled          uncontrollable_events[4] // 10
+#define empty           uncontrollable_events[5] // 12
+#define process_start   uncontrollable_events[6] // 14
+#define finish          uncontrollable_events[7] // 16
+
+
 
 #define NUM_C_EVENTS 11
 #define NUM_U_EVENTS 8
@@ -134,9 +135,9 @@ void setup() {
 
   pinMode(v_in, OUTPUT);
   pinMode(v_out, OUTPUT);
+  pinMode(led, OUTPUT);
 
-  //turn the PID on
-  myPID.SetMode(AUTOMATIC);
+  
 
   lcd.init();                      // initialize the lcd 
   lcd.backlight();
@@ -182,10 +183,10 @@ void loop() {
 
       if(packId == 1){
         event = get_event(packetSize);
-        if ((event % 2) == 1){
+        if ((event % 2) == 1 || event == reset){
           System.trigger(event);
         }
-         //Serial.println(CAN.read());
+         
       }
       else if (packId == 2){
         aux = (int)CAN.read();        
