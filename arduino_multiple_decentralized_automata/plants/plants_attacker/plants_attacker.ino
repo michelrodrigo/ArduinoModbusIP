@@ -92,6 +92,7 @@ void loop() {
     CAN.beginPacket(1);
     CAN.write(input2);
     CAN.endPacket();
+    Serial.println(String("Sent: ") + input2);
 
   }
   

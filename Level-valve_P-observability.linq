@@ -28,6 +28,7 @@ Event cooled = new Event("cooled", Controllability.Uncontrollable);
 Event empty = new Event("empty", Controllability.Uncontrollable);
 Event start = new Event("start", Controllability.Controllable);
 Event finish = new Event("finish", Controllability.Uncontrollable);
+Event reset = new Event("reset", Controllability.Uncontrollable);
 
 
 
@@ -37,6 +38,8 @@ var VIN = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[0], open_vin, s[1]),
 	new Transition(s[1], close_vin, s[0]),
 	new Transition(s[1], level_H1, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 	
   }, s[0], "VIN");
 
@@ -45,6 +48,8 @@ var VOUT = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[0], open_vout, s[1]),
 	new Transition(s[1], close_vout, s[0]),
 	new Transition(s[1], level_L1, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
 	}, s[0], "VOUT");
 
@@ -54,7 +59,9 @@ var PROCESS = new DeterministicFiniteAutomaton(new[]
 {
 	new Transition(s[0], start, s[1]),
 	new Transition(s[1], finish, s[0]),
-	
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
+
 
   }, s[0], "PROCESS");
 
@@ -62,6 +69,8 @@ var MIXER = new DeterministicFiniteAutomaton(new[]
 {
 	new Transition(s[0], turn_on_mixer, s[1]),
 	new Transition(s[1], turn_off_mixer, s[0]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
 	}, s[0], "MIXER");
 
@@ -69,6 +78,8 @@ var PUMP = new DeterministicFiniteAutomaton(new[]
 {
 	new Transition(s[0], turn_on_pump, s[1]),
 	new Transition(s[1], turn_off_pump, s[0]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
 	}, s[0], "PUMP");
 
@@ -78,29 +89,20 @@ var TEMP = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[1], cooled, s[1]),
 	new Transition(s[1], turn_off_tcontrol, s[0]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
 	}, s[0], "TEMP");
 
-var E1 = new DeterministicFiniteAutomaton(new[]
-{
-	new Transition(s[0], start, s[1]),
-	new Transition(s[1], close_vout, ms[2]),
-	new Transition(ms[2], start, s[1]),
-	new Transition(s[1], level_H1, s[1]),
-	new Transition(s[1], level_L1, s[1]),
-	new Transition(s[1], heated, s[1]),
-	new Transition(s[1], cooled, s[1])
-	
 
-  }, s[0], "E1");
 
 var E2 = new DeterministicFiniteAutomaton(new[]
 {
 	new Transition(s[0], level_H1, s[1]),
 	new Transition(s[1], close_vin, s[0]),
-	//new Transition(s[0], level_L1, s[0]),
-	//new Transition(s[1], level_L1, s[1]),
-	new Transition(s[1], level_H1, s[1])
+	new Transition(s[1], level_H1, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
   }, s[0], "E2");
 
@@ -108,7 +110,9 @@ var E3 = new DeterministicFiniteAutomaton(new[]
 {
 	new Transition(s[0], level_L1, s[1]),
 	new Transition(s[1], close_vout, s[0]),
-	new Transition(s[1], level_L1, s[1])
+	new Transition(s[1], level_L1, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
   }, s[0], "E3");
 
@@ -118,8 +122,8 @@ var E4 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], open_vin, s[0]),
 	new Transition(s[1], finish, s[1]),
 	new Transition(s[0], finish, s[0]),
-	
-	
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
   }, s[0], "E4");
 
@@ -132,6 +136,8 @@ var E5 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[1], cooled, s[1]),
 	new Transition(s[0], level_L1, s[0]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
   }, s[0], "E5");
 
@@ -141,8 +147,10 @@ var E6 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[0], level_H1, s[1]),
 	new Transition(s[1], turn_on_mixer, s[0]),
 	new Transition(s[1], level_H1, s[1]),
-	
-	
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
+
+
 
   }, s[0], "E6");
 
@@ -153,6 +161,8 @@ var E7 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[0], heated, s[0]),
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[1], cooled, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
   }, s[0], "E7");
 
 var E8 = new DeterministicFiniteAutomaton(new[]
@@ -162,7 +172,9 @@ var E8 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[1], cooled, s[1]),
 	new Transition(s[0], cooled, s[0]),
-	
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
+
   }, s[0], "E8");
 
 var E9 = new DeterministicFiniteAutomaton(new[]
@@ -172,6 +184,8 @@ var E9 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[0], heated, s[0]),
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[1], cooled, s[1]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
   }, s[0], "E9");
 
 var E10 = new DeterministicFiniteAutomaton(new[]
@@ -183,6 +197,8 @@ var E10 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], level_H1, s[1]),
 	new Transition(s[0], heated, s[0]),
 	new Transition(s[0], cooled, s[0]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
 
   }, s[0], "E10");
 
@@ -197,6 +213,10 @@ var E11 = new DeterministicFiniteAutomaton(new[]
 	new Transition(s[1], heated, s[1]),
 	new Transition(s[2], cooled, s[2]),
 	new Transition(s[2], heated, s[2]),
+	new Transition(s[1], reset, s[0]),
+	new Transition(s[0], reset, s[0]),
+	new Transition(s[2], reset, s[0]),
+	
   }, s[0], "E11");
 
 
@@ -210,7 +230,7 @@ var E11 = new DeterministicFiniteAutomaton(new[]
 //pequenaFabrica(out var plants, out var specs);
 E11.ShowAutomaton("E");
 
-var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] {  TEMP}, new[] {E11});
+var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] {  VIN}, new[] {E2});
 var Sups = DeterministicFiniteAutomaton.LocalModularSupervisor(new[] { VIN, VOUT, PROCESS, MIXER, TEMP, PUMP }, new[] {E2, E3, E4, E5, E6, E7, E8, E9, E10, E11});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { VIN, VOUT }, new[] {E1});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants.ToArray(), specs.ToArray());

@@ -114,6 +114,60 @@ void read_level_levels();
 void add_modbus_registers();
 void build_automata();
 
+void PROCESS_IDLE_action();
+void PROCESS_PRODUCING_action();
+void VIN_0_action();
+void VIN_1_action();
+void VIN_level_H1_action();
+void VIN_open_vin_action();
+void VIN_close_vin_action();
+void VOUT_0_action();
+void VOUT_1_action();
+void VOUT_open_vout_action();
+void VOUT_close_vout_action();
+void VOUT_level_L1_action();
+void MIXER_0_action();
+void MIXER_1_action();
+void MIXER_turn_on_action();
+void PUMP_0_action();
+void PUMP_1_action();
+void PUMP_turn_on_action();
+void PUMP_turn_off_action();
+void TEMP_0_action();
+void TEMP_1_action();
+void TEMP_turn_on_tcontrol_action();
+void TEMP_turn_off_tcontrol_action();
+void TEMP_heated_action();
+void TEMP_cooled_action();
+void S2_0_action();
+void S2_1_action();
+void S3_0_action();
+void S3_1_action();
+void S4_0_action();
+void S4_1_action();
+void S4_2_action();
+void S5_0_action();
+void S5_1_action();
+void S5_2_action();
+void S6_0_action();
+void S6_1_action();
+void S6_2_action();
+void S7_0_action();
+void S7_1_action();
+void S7_2_action();
+void S8_0_action();
+void S8_1_action();
+void S8_2_action();
+void S9_0_action();
+void S9_1_action();
+void S9_2_action();
+void S10_0_action();
+void S10_1_action();
+void S10_2_action();
+void S11_0_action();
+void S11_1_action();
+void S11_2_action();
+
 
 // Events ---------------------------------------------------------------
 int controllable_events[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21 };
@@ -132,12 +186,13 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14, 16};
 
 #define level_H1        uncontrollable_events[0] // 2
 #define level_L1        uncontrollable_events[1] // 4
-#define full            uncontrollable_events[2] // 6
+#define reset           uncontrollable_events[2] // 6
 #define heated          uncontrollable_events[3] // 8
 #define cooled          uncontrollable_events[4] // 10
 #define empty           uncontrollable_events[5] // 12
 #define process_start   uncontrollable_events[6] // 14
 #define finish          uncontrollable_events[7] // 16
+
 
 
 #define NUM_C_EVENTS 11
@@ -349,8 +404,8 @@ void loop () {
           update_communication();
        }
        
-       if(PROCESS_SYSTEM.current_state() == Idle && start_process == 1){
-          System.trigger_if_possible(process_start);
+       if(PROCESS_SYSTEM.currentState() == Idle && start_process == 1){
+          System.triggerIfPossible(process_start);
        }
    }
 
@@ -401,7 +456,7 @@ void update_communication(){
   }
   if(!incoming_msg.isEmpty()){
     event_to_trigger = incoming_msg.dequeue();
-    System.trigger_if_possible(event_to_trigger);
+    System.triggerIfPossible(event_to_trigger);
 
   }
 }

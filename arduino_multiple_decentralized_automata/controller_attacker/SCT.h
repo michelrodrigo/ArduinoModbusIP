@@ -34,16 +34,16 @@ Created in 22/06/2021
 
 /* State 
  * Each state has:
- * - on_enter function: it will be executed when the state is reached
- * - on_exit function: it will be execute when the state is leaved
+ * - onEnter function: it will be executed when the state is reached
+ * - onExit function: it will be execute when the state is leaved
  * - char num_state: a number that uniquely identifies a state within an automaton
  */
 struct State
 {
-  State(void (*on_enter)(), void (*on_exit)(), char num_state);
+  State(void (*onEnter)(), void (*onExit)(), char num_state);
 
-  void (*on_enter)();
-  void (*on_exit)();
+  void (*onEnter)();
+  void (*onExit)();
   char num_state;
 };
 
@@ -59,17 +59,17 @@ public:
   Automaton(State* initial_state);
   ~Automaton();
 
-  void add_transition(State* state_from, State* state_to, int event,
-                      void (*on_transition)());
+  void addTransition(State* state_from, State* state_to, int event,
+                      void (*onTransition)());
   void trigger(int event);          //triggers an event           
-  bool is_defined(int event);       //returns true if the given event is defined at the current state;
+  bool isDefined(int event);       //returns true if the given event is defined at the current state;
                                     //returns false otherwise.
-  bool is_feasible(int event);      //returns true if the event can be triggered, considering the
+  bool isFeasible(int event);      //returns true if the event can be triggered, considering the
                                     //automata in the system that may share the given event. A shared
                                     //event can only be triggered if it can be triggered in all automata
                                     //in which the event is defined; 
                                     //returns false otherwise.
-  int current_state();              //returns the state number of the current state
+  int currentState();              //returns the state number of the current state
 
 private:
   struct Transition
@@ -77,13 +77,13 @@ private:
     State* state_from;
     State* state_to;
     int event;
-    void (*on_transition)();
+    void (*onTransition)();
 
-    State* make_transition();
+    State* makeTransition();
   };
 
-  static Transition create_transition(State* state_from, State* state_to,
-                                      int event, void (*on_transition)());
+  static Transition createTransition(State* state_from, State* state_to,
+                                      int event, void (*onTransition)());
 
  
   
@@ -107,56 +107,67 @@ public:
 	Supervisor(State* initial_state);
 	void disable(int event);            //disables given event 
 	void enable(int event);             //enables given event
-	bool is_disabled(int event);        //returns true if given event is disabled at the currente 
+	bool isDisabled(int event);        //returns true if given event is disabled at the currente 
                                       //state; return false othewise
 	
 
 private:
-	std::map<int,bool> disablements;                   //stores the disablement information.
+	std::map<int,bool> disablements;    //stores the disablement information. It is a map from event(int)
+                                      //to the disablement information: true if disabled, false otherwise
 };
 
 /* DES 
  * A system is composed by plant automata and supervisor automata.
  * 
- * When multiple automata are being executed at the same time, it is
- * important to verify if shared events are being exceuted at the same time
- * as well.
+ * Plant automata must have disjoint alphabets. Use the addPlant and addSupervisor 
+ * methods to add automata to the system. To trigger an event, use the triggerIfPossible method. 
+ * It will take into account the information from the supervisors: an event cannot be triggered if it
+ * is disabled by at least one of the supervisors. The controllable events will be triggered according to 
+ * the mode set with setMode method. Controllable events should be represented by odd numbers, while 
+ * uncontrollable events should be represented by even numbers.
  */
 class DES
 {
 	
 public:
   DES(int* controllable_events, int num_c_events, int* uncontrollable_events, int num_u_events);
-	void add_plant(Automaton* plant);
-	void add_supervisor(Supervisor* sup);
-	bool trigger_if_possible(int event); //triggers given event if it is possible
+	void addPlant(Automaton* plant);      //Adds a plant to the DES 
+	void addSupervisor(Supervisor* sup);  //Adds a supervisor to the DES
+	bool triggerIfPossible(int event); //triggers given event if it is possible
                                        //considering all other automata and supervisors
                                        //returns true if event was triggered, false otherwise
-  void trigger_supervisors(int event); //triggers the events in the supervisors
+  void triggerSupervisors(int event); //triggers the events in the supervisors
   void setMode(int mode, int* list, int list_size);   //this functions sets the operation mode:
                                        //1 - random: triggers enabled events randomly, list is null
                                        //2 - priority: triggers enabled events according to priority list
                                        //3 - sequence: triggers events in sequence, according to list
   
-  void updateDES();
-  int* enabled_events;
+  void updateDES();                    //verifies if there is a new event that can be triggered
+  
+  int* enabled_events;                  //a vector that stores the information about a controllable 
+                                        //event being enabled
 
 
 private:
-	void enabledEvents();
+	void enabledEvents();                 //updates the enabled_events vector
 	
 	Automaton** m_plants;                //vector of pointers to the plant automata
 	Supervisor** m_supervisors;          //vector of pointers to the supervisor automata
-  int* m_controllable_events;
-  int* m_uncontrollable_events;
-  int m_num_c_events;
-  int m_num_u_events;
-	int m_num_plants;
-	int m_num_sups;
-  int m_mode;
-  int* m_action_list;
-  int m_list_size;
-  int m_next_event;
+  int* m_controllable_events;          //vector of controllable events
+  int* m_uncontrollable_events;        //vector of uncontrollable events
+  int m_num_c_events;                  //stores the number of controllable events
+  int m_num_u_events;                  //stores the number of uncontrollable events
+	int m_num_plants;                    //stores the number of plant automata
+	int m_num_sups;                      //stores the number of supervisor automata
+  int m_mode;                          //mode of operation. This will defined the rule of chosing controllable
+                                       //events to be triggered, specially when there are more than one at
+                                       //a given moment. Possible values:
+                                       //     RANDOM: choose randomly among the enabled events
+                                       //     PRIORITY: TODO (events should have priorities over others)
+                                       //     LIST: the events will be triggered according to its position in a list
+  int* m_action_list;                  //when mode is set to LIST, this vector stores the list of events
+  int m_list_size;                     //when mode is set to LIST, stores the number of events
+  int m_next_event;                    //stores the next event to be triggered
  
  
 
