@@ -5,18 +5,24 @@ void build_automata(){
  
 
    Serial.println("MIXER");
-  MIXER.add_transition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
-  MIXER.add_transition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
+  MIXER.addTransition(&MIXER_0, &MIXER_1, turn_on_mixer, NULL);
+  MIXER.addTransition(&MIXER_1, &MIXER_0, turn_off_mixer, NULL);
+  MIXER.addTransition(&MIXER_1, &MIXER_0, reset, NULL);
+  MIXER.addTransition(&MIXER_0, &MIXER_0, reset, NULL);
   
   Serial.println("PUMP");
-  PUMP.add_transition(&PUMP_0, &PUMP_1, turn_on_pump, NULL);
-  PUMP.add_transition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
+  PUMP.addTransition(&PUMP_0, &PUMP_1, turn_on_pump, NULL);
+  PUMP.addTransition(&PUMP_1, &PUMP_0, turn_off_pump, NULL);
+  PUMP.addTransition(&PUMP_1, &PUMP_0, reset, NULL);
+  PUMP.addTransition(&PUMP_0, &PUMP_0, reset, NULL);
 
   Serial.println("TEMP");
-  TEMP.add_transition(&TEMP_0, &TEMP_1, turn_on_tcontrol, NULL);
-  TEMP.add_transition(&TEMP_1, &TEMP_1, heated, &TEMP_heated_action);
-  TEMP.add_transition(&TEMP_1, &TEMP_1, cooled, &TEMP_cooled_action);
-  TEMP.add_transition(&TEMP_1, &TEMP_0, turn_off_tcontrol, NULL);
+  TEMP.addTransition(&TEMP_0, &TEMP_1, turn_on_tcontrol, NULL);
+  TEMP.addTransition(&TEMP_1, &TEMP_1, heated, &TEMP_heated_action);
+  TEMP.addTransition(&TEMP_1, &TEMP_1, cooled, &TEMP_cooled_action);
+  TEMP.addTransition(&TEMP_1, &TEMP_0, turn_off_tcontrol, NULL);
+  TEMP.addTransition(&TEMP_1, &TEMP_0, reset, NULL);
+  TEMP.addTransition(&TEMP_0, &TEMP_0, reset, NULL);
 
   
   System.add_plant(&MIXER);

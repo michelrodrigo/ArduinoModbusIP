@@ -51,8 +51,10 @@ int uncontrollable_events[] = {2, 4, 6, 8, 10, 12, 14};
 
 int a = 0;
 
-
-
+int attack_mode = 0;
+int last_event = 0;
+long ts; // stores the time
+int cont = 0;
   
 void setup() {
   Serial.begin(9600);
@@ -64,7 +66,8 @@ void setup() {
     Serial.println("Starting CAN failed!");
     while (1);
   }
- 
+
+  ts = millis();
 }
  
 void loop() {
@@ -76,18 +79,41 @@ void loop() {
     if(packId == 1) {
       // only print packet data for non-RTR packets
       while (CAN.available()) {
-        Serial.println((int)CAN.read());
+        last_event = (int)CAN.read();
+        Serial.println(last_event);
       }
     }
 
   
     }
 
+   if (attack_mode == 1){
+      if(last_event == 1){
+        if (millis() > ts + 100) {
+              ts = millis();
+              cont++;
+        }
+        if(cont >= 20){
+          CAN.beginPacket(1);
+          CAN.write(2);
+          CAN.endPacket();
+          Serial.println(String("Sent: 2") );
+        }
+      }
+   }
+
    
  
 
   if (Serial.available()) {
     int input2 = Serial.parseInt();
+    Serial.println(input2);
+    if (input2 == 98){
+      attack_mode = 1;
+    }
+    else if(input2 == 99){
+      attack_mode = 0;
+    }
 
     CAN.beginPacket(1);
     CAN.write(input2);

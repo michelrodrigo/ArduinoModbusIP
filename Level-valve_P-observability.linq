@@ -1,6 +1,8 @@
 <Query Kind="Statements">
+  <Reference>D:\Downloads\DrawLibrary.dll</Reference>
   <Reference>&lt;RuntimeDirectory&gt;\System.ValueTuple.dll</Reference>
   <NuGetReference>UltraDES</NuGetReference>
+  <Namespace>DrawLibrary</Namespace>
   <Namespace>UltraDES</Namespace>
 </Query>
 
@@ -228,10 +230,10 @@ var E11 = new DeterministicFiniteAutomaton(new[]
 
 //var teste = K1.IsControllable(G1);
 //pequenaFabrica(out var plants, out var specs);
-E11.ShowAutomaton("E");
+//E2.ShowAutomaton("E");
 
-var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] {  VIN}, new[] {E2});
-var Sups = DeterministicFiniteAutomaton.LocalModularSupervisor(new[] { VIN, VOUT, PROCESS, MIXER, TEMP, PUMP }, new[] {E2, E3, E4, E5, E6, E7, E8, E9, E10, E11});
+//var S = DeterministicFiniteAutomaton.MonolithicReducedSupervisor(new[] { TEMP, MIXER}, new[] {E7});
+//var Sups = DeterministicFiniteAutomaton.LocalModularSupervisor(new[] { VIN, VOUT, PROCESS, MIXER, TEMP, PUMP }, new[] {E2, E3, E4, E5, E6, E7, E8, E9, E10, E11});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { VIN, VOUT }, new[] {E1});
 //var S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants.ToArray(), specs.ToArray());
 //Sups.ElementAt(0).ShowAutomaton("S1");
@@ -246,14 +248,19 @@ var Sups = DeterministicFiniteAutomaton.LocalModularSupervisor(new[] { VIN, VOUT
 //var dis = S.DisabledEvents(new[] { G });
 //Sups.ElementAt(0).ShowAutomaton("S");
 
-//var G1 = DeterministicFiniteAutomaton.ParallelComposition(new[] { TEMP, PROCESS});
-//var K1 = DeterministicFiniteAutomaton.ParallelComposition(new[] { E8 });
-//var S = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { G1 }, new[] { K1 },false);
+var G1 = DeterministicFiniteAutomaton.ParallelComposition(new[] { MIXER, TEMP});
+var K1 = DeterministicFiniteAutomaton.ParallelComposition(new[] { E2, E6, E10 });
+var S = DeterministicFiniteAutomaton.MonolithicSupervisor(new[] { G1 }, new[] { K1 },false);
 S.ShowAutomaton("S");
+//K1.ShowAutomaton("K");
 //List<Event> v2 = new[] { level_L1, level_H1, close_vin, open_vin, close_vout, open_vout, }.ToList();
-List<Event> v2 = new[] { level_L1, level_H1, heated, cooled }.ToList();
+List<Event> v2 = new[] { level_L1, level_H1, heated, cooled}.ToList();
 
-//check_Pobservability3(G1, K1, v2);
+string path = @"D:\Downloads\g2.html";
+
+IO.MostrarAutomaton(G1, path, 1f);
+
+check_Pobservability3(G1, K1, v2);
 
 Boolean check_Pobservability3(DeterministicFiniteAutomaton H, DeterministicFiniteAutomaton desired_language, List<Event> vulnerable_events)
 {

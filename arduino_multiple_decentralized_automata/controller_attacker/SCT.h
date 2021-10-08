@@ -146,7 +146,8 @@ public:
   
   int* enabled_events;                  //a vector that stores the information about a controllable 
                                         //event being enabled
-
+  void supervisorStates();              //prints a vector in which each position corresponds to a state number
+                                        //of a supervisor. To be used while debugging
 
 private:
 	void enabledEvents();                 //updates the enabled_events vector

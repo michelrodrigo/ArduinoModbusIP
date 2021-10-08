@@ -60,7 +60,7 @@ public:
   Automaton(State* initial_state);
   ~Automaton();
 
-  void add_transition(State* state_from, State* state_to, int event,
+  void addTransition(State* state_from, State* state_to, int event,
                       void (*on_transition)());
   void trigger(int event);          //triggers an event           
  

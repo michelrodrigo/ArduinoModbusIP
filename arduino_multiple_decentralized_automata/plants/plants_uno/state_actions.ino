@@ -5,22 +5,22 @@
 
 void MIXER_0_action(){
     Serial.println("MIXER turned off");
-    
+    digitalWrite(mixer, LOW);
 }
 
 void MIXER_1_action(){
   Serial.println("MIXER turned on");
- 
+ digitalWrite(mixer, HIGH);
 }
 
 void PUMP_0_action(){
     Serial.println("PUMP turned off");
-    
+    digitalWrite(pump, LOW);
 }
 
 void PUMP_1_action(){
   Serial.println("PUMP turned on");
-  
+  digitalWrite(pump, HIGH);
 }
 
 void TEMP_0_action(){
