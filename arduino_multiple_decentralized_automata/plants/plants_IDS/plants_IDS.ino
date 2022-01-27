@@ -58,10 +58,109 @@ int last_event = 0;
 long ts; // stores the time
 int cont = 0;
 
+#define Idle        0
+#define Filling     1
+#define Heating     2
+#define Cooling     3
+#define Draining    4  
 
+// Process model
+State PROCESS_IDLE(NULL, NULL, 0);
+State PROCESS_PRODUCING(NULL, NULL, 1);
+
+// Input valve states
+State VIN_0(NULL, NULL, 0);
+State VIN_1(NULL, NULL, 1);
+
+// Output valve states
+State VOUT_0(NULL, NULL, 0);
+State VOUT_1(NULL, NULL, 1);
+
+// Mixer states
+State MIXER_0(NULL, NULL, 0);
+State MIXER_1(NULL, NULL, 1);
+
+// Pump states
+State PUMP_0(NULL, NULL, 0);
+State PUMP_1(NULL, NULL, 1);
+
+// Temp states
+State TEMP_0(NULL, NULL, 0);
+State TEMP_1(NULL, NULL, 1);
+
+// Supervisor of specification E2 - states
+State S2_0(NULL, NULL, 0);
+State S2_1(NULL, NULL, 1);
+
+// Supervisor of specification E3 - states
+State S3_0(NULL, NULL, 0);
+State S3_1(NULL, NULL, 1);
+
+// Supervisor of specification E4 - states
+State S4_0(NULL, NULL, 0);
+State S4_1(NULL, NULL, 1);
+State S4_2(NULL, NULL, 2);
+
+// Supervisor of specification E5 - states
+State S5_0(NULL, NULL, 0);
+State S5_1(NULL, NULL, 1);
+State S5_2(NULL, NULL, 2);
+
+// Supervisor of specification E6 - states
+State S6_0(NULL, NULL, 0);
+State S6_1(NULL, NULL, 1);
+State S6_2(NULL, NULL, 2);
+
+// Supervisor of specification E7 - states
+State S7_0(NULL, NULL, 0);
+State S7_1(NULL, NULL, 1);
+State S7_2(NULL, NULL, 2);
+
+// Supervisor of specification E8 - states
+State S8_0(NULL, NULL, 0);
+State S8_1(NULL, NULL, 1);
+State S8_2(NULL, NULL, 2);
+
+// Supervisor of specification E9 - states
+State S9_0(NULL, NULL, 0);
+State S9_1(NULL, NULL, 1);
+State S9_2(NULL, NULL, 2);
+
+// Supervisor of specification E10 - states
+State S10_0(NULL, NULL, 0);
+State S10_1(NULL, NULL, 1);
+State S10_2(NULL, NULL, 2);
+
+// Supervisor of specification E11 - states
+State S11_0(NULL, NULL, 0);
+State S11_1(NULL, NULL, 1);
+State S11_2(NULL, NULL, 2);
+
+// Automata ------------------------------------------------------------
+
+Automaton PROCESS_SYSTEM(&PROCESS_IDLE);
+Automaton VIN(&VIN_0);
+Automaton VOUT(&VOUT_0);
+Automaton MIXER(&MIXER_0);
+Automaton PUMP(&PUMP_0);
+Automaton TEMP(&TEMP_0);
+
+Automaton S2(&S2_0);
+Automaton S3(&S3_0);
+Automaton S4(&S4_0);
+Automaton S5(&S5_0);
+Automaton S6(&S6_0);
+Automaton S7(&S7_0);
+Automaton S8(&S8_0);
+Automaton S9(&S9_0);
+Automaton S10(&S10_0);
+Automaton S11(&S11_0);
+
+DES System();
   
 void setup() {
   Serial.begin(9600);
+
 
 
  Serial.println("CAN Receiver");
