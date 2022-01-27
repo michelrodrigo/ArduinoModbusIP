@@ -53,6 +53,8 @@ int error = 0;
 
 bool start_process = false;
 bool stop_process = false;
+bool reset_process = false;
+bool aux_reset = false;
 bool drain_out = false;
 bool valve_in = false;
 bool valve_out = false;
@@ -93,6 +95,7 @@ const int MIXER_STATUS = 15;
 const int TIMER_MIXER_HREG = 16;
 const int SETPOINT2_HREG = 17;
 const int PUMP_STATUS = 18;
+const int RESET_COIL = 19;
 
 // EEPROM ADDRESSES ------------------------------------------------------
 #define TEMP_SETPOINT_ADDRESS 0
@@ -378,7 +381,12 @@ void loop () {
 //    CAN.beginPacket(1);
 //    CAN.write(input2);
 //    CAN.endPacket();
-    outcoming_msg.enqueue(input2);
+    if(input2 == 0){
+      System.supervisorStates();
+    }
+    else{
+      outcoming_msg.enqueue(input2);
+    }
   }
 
   if (packetSize) { //if there is a packet    
@@ -406,6 +414,13 @@ void loop () {
        
        if(PROCESS_SYSTEM.currentState() == Idle && start_process == 1){
           System.triggerIfPossible(process_start);
+       }
+
+       if(aux_reset != reset_process && reset_process == 1){
+          Serial.println("reset");
+          System.triggerIfPossible(reset);
+          outcoming_msg.enqueue(reset);
+          aux_reset = reset_process;
        }
    }
 
@@ -453,10 +468,14 @@ void update_communication(){
     CAN.beginPacket(1);
     CAN.write(event_to_send);
     CAN.endPacket();
+    Serial.print("T: ");
+    Serial.println(event_to_send);  
   }
   if(!incoming_msg.isEmpty()){
     event_to_trigger = incoming_msg.dequeue();
     System.triggerIfPossible(event_to_trigger);
+    Serial.print("R: ");
+    Serial.println(event_to_trigger);    
 
   }
 }

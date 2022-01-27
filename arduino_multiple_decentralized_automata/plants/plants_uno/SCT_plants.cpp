@@ -41,7 +41,7 @@ Automaton::~Automaton()
 }
 
 //Create a new transition in the automaton
-void Automaton::add_transition(State* state_from, State* state_to, int event,
+void Automaton::addTransition(State* state_from, State* state_to, int event,
                          void (*on_transition)())
 {
   if (state_from == NULL || state_to == NULL)

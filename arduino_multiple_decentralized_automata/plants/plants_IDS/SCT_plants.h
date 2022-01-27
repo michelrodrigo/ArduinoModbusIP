@@ -24,8 +24,8 @@ Created in 22/06/2021
   #include <WProgram.h>
 #endif
 
-#include "Arduino_AVRSTL.h"
-#include "map"
+//#include "Arduino_AVRSTL.h"
+//#include "map"
 
 //Modes of operation for decision making
 #define RANDOM        1
@@ -60,7 +60,7 @@ public:
   Automaton(State* initial_state);
   ~Automaton();
 
-  void addTransition(State* state_from, State* state_to, int event,
+  void add_transition(State* state_from, State* state_to, int event,
                       void (*on_transition)());
   void trigger(int event);          //triggers an event           
  

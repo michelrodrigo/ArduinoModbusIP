@@ -18,6 +18,7 @@ void add_modbus_registers(){
     mb.addHreg(TIMER_MIXER_HREG);
     mb.addHreg(SETPOINT2_HREG);
     mb.addIsts(PUMP_STATUS);
+    mb.addCoil(RESET_COIL);
 }
 
 void build_automata(){
@@ -30,7 +31,7 @@ void build_automata(){
   PROCESS_SYSTEM.addTransition(&PROCESS_IDLE, &PROCESS_IDLE, reset, NULL);
   
   Serial.println("VIN");
-   VIN.addTransition(&VIN_0, &VIN_1, open_vin, &VIN_open_vin_action);
+  VIN.addTransition(&VIN_0, &VIN_1, open_vin, &VIN_open_vin_action);
   VIN.addTransition(&VIN_1, &VIN_0, close_vin, &VIN_close_vin_action);  
   VIN.addTransition(&VIN_1, &VIN_1, level_H1, &VIN_level_H1_action);  
   VIN.addTransition(&VIN_1, &VIN_0, reset, NULL);
@@ -192,12 +193,13 @@ int get_event(){
 
   
    received_event = (int)CAN.read();
-  Serial.println(String("Received event: ") + received_event);
+  //Serial.println(String("Received event: ") + received_event);
 
   return received_event;
 
   
 }
+
 
 void update_io(){
 
@@ -310,6 +312,7 @@ void update_io(){
    
    
    start_process = mb.Coil(START_COIL);
+   reset_process = mb.Coil(RESET_COIL);
 
    mb.Ists(V_IN_STATUS, valve_in);
    mb.Ists(V_OUT_STATUS, valve_out);

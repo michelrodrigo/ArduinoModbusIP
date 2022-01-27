@@ -173,6 +173,15 @@ void DES::addPlant(Automaton* plant)
   m_num_plants++;                         
 }
 
+void DES::supervisorStates(){
+  
+
+  for(int i = 0; i < m_num_sups; i++){
+    Serial.print(m_supervisors[i]->currentState());
+  }
+  Serial.println();
+}
+
 void DES::addSupervisor(Supervisor* sup)
 {
   m_supervisors = (Supervisor**) realloc(m_supervisors, (m_num_sups + 1)
